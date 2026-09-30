@@ -1,0 +1,509 @@
+// AutoHunt data model
+// Calculator rates and rules live in the database (Auction/FeeTier, ShippingRate,
+// CustomsRule, FeeRule, ExchangeRate) and are edited from /admin — never hardcoded.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────── Enums ─────────────────────────
+
+enum Role {
+  ADMIN
+  CUSTOMER
+  CORPORATE
+}
+
+enum Locale {
+  hy
+  ru
+  en
+}
+
+enum CarStatus {
+  AVAILABLE
+  RESERVED
+  IN_TRANSIT
+  SOLD
+}
+
+enum FuelType {
+  GASOLINE
+  DIESEL
+  HYBRID
+  PLUGIN_HYBRID
+  ELECTRIC
+}
+
+enum Transmission {
+  AUTOMATIC
+  MANUAL
+  CVT
+  ROBOTIC
+}
+
+enum Drive {
+  FWD
+  RWD
+  AWD
+  FOUR_WD
+}
+
+enum BodyType {
+  SEDAN
+  SUV
+  CROSSOVER
+  HATCHBACK
+  COUPE
+  WAGON
+  PICKUP
+  MINIVAN
+  CONVERTIBLE
+}
+
+enum MileageUnit {
+  MI
+  KM
+}
+
+enum ImportStage {
+  AUCTION
+  PURCHASED
+  PICKED_UP
+  AT_PORT
+  SHIPPING
+  ARRIVED
+  CUSTOMS
+  REGISTRATION
+  READY
+}
+
+enum StageStatus {
+  DONE
+  CURRENT
+  PENDING
+}
+
+enum RequestType {
+  CAR_REQUEST
+  IMPORT
+  CAR_SEARCH
+  CORPORATE
+  CONTACT
+  FINANCING
+}
+
+enum RequestStatus {
+  NEW
+  IN_PROGRESS
+  QUOTED
+  CLOSED
+}
+
+enum FeeCategory {
+  DOCUMENTATION
+  REGISTRATION
+  SERVICE
+}
+
+enum FeeType {
+  FIXED
+  PERCENT
+}
+
+enum FeeBasis {
+  CAR_PRICE
+  SUBTOTAL
+}
+
+enum BlogCategory {
+  CAR_IMPORT
+  AUCTIONS
+  CUSTOMS
+  CAR_BUYING
+  MAINTENANCE
+  NEWS
+  GUIDES
+}
+
+enum DocumentType {
+  INVOICE
+  BILL_OF_SALE
+  TITLE
+  BILL_OF_LADING
+  CUSTOMS
+  REGISTRATION
+  INSPECTION
+  VEHICLE_HISTORY
+  AUCTION_SHEET
+  OTHER
+}
+
+// ───────────────────────── Users ─────────────────────────
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  passwordHash  String
+  name          String
+  phone         String?
+  role          Role           @default(CUSTOMER)
+  locale        Locale         @default(hy)
+  companyName   String?
+  companyTaxId  String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  imports       Import[]
+  requests      Request[]
+  calculations  Calculation[]
+  documents     Document[]
+  notifications Notification[]
+}
+
+// ───────────────────────── Inventory ─────────────────────────
+
+model Car {
+  id           String           @id @default(cuid())
+  slug         String           @unique
+  brand        String
+  model        String
+  trim         String?
+  year         Int
+  mileage      Int
+  mileageUnit  MileageUnit      @default(MI)
+  engineVolume Float? // liters; null for EV
+  horsepower   Int?
+  fuel         FuelType
+  transmission Transmission
+  drive        Drive
+  bodyType     BodyType
+  color        String?
+  interior     String?
+  vin          String?
+  price        Int // USD
+  location     String
+  source       String? // e.g. "Copart", "IAAI", "Local"
+  status       CarStatus        @default(AVAILABLE)
+  published    Boolean          @default(true)
+  featured     Boolean          @default(false)
+  features     String[]
+  history      Json? // { owners, accidents, serviceRecords, titleStatus, lotNumber }
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  soldAt       DateTime?
+  images       CarImage[]
+  translations CarTranslation[]
+  documents    CarDocument[]
+  requests     Request[]
+  imports      Import[]
+
+  @@index([status, published])
+  @@index([brand, model])
+  @@index([price])
+}
+
+model CarTranslation {
+  id             String  @id @default(cuid())
+  carId          String
+  locale         Locale
+  description    String  @default("")
+  seoTitle       String?
+  seoDescription String?
+  car            Car     @relation(fields: [carId], references: [id], onDelete: Cascade)
+
+  @@unique([carId, locale])
+}
+
+model CarImage {
+  id        String @id @default(cuid())
+  carId     String
+  url       String
+  alt       String?
+  sortOrder Int    @default(0)
+  car       Car    @relation(fields: [carId], references: [id], onDelete: Cascade)
+
+  @@index([carId, sortOrder])
+}
+
+model CarDocument {
+  id    String       @id @default(cuid())
+  carId String
+  title String
+  url   String
+  type  DocumentType @default(OTHER)
+  car   Car          @relation(fields: [carId], references: [id], onDelete: Cascade)
+}
+
+// ───────────────────────── Imports & tracking ─────────────────────────
+
+model Import {
+  id             String        @id @default(cuid())
+  code           String        @unique
+  customerId     String
+  carId          String?
+  vehicleTitle   String
+  vehicleYear    Int
+  imageUrl       String?
+  vin            String?
+  lotNumber      String?
+  auctionId      String?
+  purchasePrice  Int
+  estimatedTotal Int
+  finalTotal     Int? // set once official customs assessment is known
+  paidAmount     Int           @default(0)
+  currentStage   ImportStage   @default(AUCTION)
+  breakdown      Json? // snapshot of the cost breakdown at the time of estimate
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  customer       User          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  car            Car?          @relation(fields: [carId], references: [id], onDelete: SetNull)
+  auction        Auction?      @relation(fields: [auctionId], references: [id], onDelete: SetNull)
+  events         ImportEvent[]
+  documents      Document[]
+}
+
+model ImportEvent {
+  id       String      @id @default(cuid())
+  importId String
+  stage    ImportStage
+  status   StageStatus @default(PENDING)
+  date     DateTime?
+  location String?
+  note     String?
+  import   Import      @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  @@unique([importId, stage])
+}
+
+model Document {
+  id        String       @id @default(cuid())
+  userId    String
+  importId  String?
+  title     String
+  url       String
+  type      DocumentType @default(OTHER)
+  createdAt DateTime     @default(now())
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  import    Import?      @relation(fields: [importId], references: [id], onDelete: SetNull)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+// ───────────────────────── Leads ─────────────────────────
+
+model Request {
+  id        String        @id @default(cuid())
+  type      RequestType
+  status    RequestStatus @default(NEW)
+  name      String
+  email     String?
+  phone     String
+  company   String?
+  message   String?
+  payload   Json?
+  locale    Locale        @default(hy)
+  carId     String?
+  userId    String?
+  createdAt DateTime      @default(now())
+  car       Car?          @relation(fields: [carId], references: [id], onDelete: SetNull)
+  user      User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([type, status])
+}
+
+// ───────────────────────── Calculator configuration ─────────────────────────
+
+model Auction {
+  id        String           @id @default(cuid())
+  code      String           @unique // COPART, IAAI
+  name      String
+  active    Boolean          @default(true)
+  sortOrder Int              @default(0)
+  feeTiers  AuctionFeeTier[]
+  imports   Import[]
+}
+
+/// Buyer fee = fixedFee + price * percentFee / 100 for the tier the price falls into.
+model AuctionFeeTier {
+  id         String  @id @default(cuid())
+  auctionId  String
+  minPrice   Int
+  maxPrice   Int? // null = no upper bound
+  fixedFee   Float   @default(0)
+  percentFee Float   @default(0)
+  auction    Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+
+  @@index([auctionId, minPrice])
+}
+
+model OriginCountry {
+  id        String         @id @default(cuid())
+  code      String         @unique // US, CA
+  name      Json // { hy, ru, en }
+  active    Boolean        @default(true)
+  sortOrder Int            @default(0)
+  rates     ShippingRate[]
+}
+
+model Destination {
+  id        String         @id @default(cuid())
+  code      String         @unique // GYUMRI, YEREVAN
+  name      Json
+  active    Boolean        @default(true)
+  sortOrder Int            @default(0)
+  rates     ShippingRate[]
+}
+
+model VehicleType {
+  id        String         @id @default(cuid())
+  code      String         @unique // SEDAN, SUV, PICKUP, VAN
+  name      Json
+  sortOrder Int            @default(0)
+  rates     ShippingRate[]
+}
+
+model ShippingRate {
+  id              String        @id @default(cuid())
+  originId        String
+  destinationId   String
+  vehicleTypeId   String
+  inlandTransport Int // auction yard → export port
+  oceanShipping   Int // export port → Poti / Batumi
+  landDelivery    Int // Georgian port → destination in Armenia
+  origin          OriginCountry @relation(fields: [originId], references: [id], onDelete: Cascade)
+  destination     Destination   @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  vehicleType     VehicleType   @relation(fields: [vehicleTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([originId, destinationId, vehicleTypeId])
+}
+
+/// First matching active rule (lowest priority number) wins.
+/// duty = max(customsValue * dutyPercent/100, engineCc * dutyPerCcEur * EUR→USD)
+/// vat  = (customsValue + duty + exciseFixed) * vatPercent/100
+model CustomsRule {
+  id           String     @id @default(cuid())
+  name         String
+  fuelTypes    FuelType[] // empty = all fuels
+  minAge       Int        @default(0)
+  maxAge       Int? // null = no upper bound
+  minEngineCc  Int        @default(0)
+  maxEngineCc  Int?
+  dutyPercent  Float      @default(0)
+  dutyPerCcEur Float      @default(0)
+  exciseFixed  Float      @default(0) // USD
+  vatPercent   Float      @default(20)
+  processingFee Float     @default(0) // USD customs processing / clearance fee
+  priority     Int        @default(100)
+  active       Boolean    @default(true)
+  notes        String?
+}
+
+model FeeRule {
+  id        String      @id @default(cuid())
+  key       String      @unique
+  name      Json
+  category  FeeCategory
+  type      FeeType     @default(FIXED)
+  basis     FeeBasis    @default(CAR_PRICE)
+  amount    Float
+  minAmount Float?
+  maxAmount Float?
+  active    Boolean     @default(true)
+  sortOrder Int         @default(0)
+}
+
+model ExchangeRate {
+  code      String   @id // AMD, EUR, RUB
+  perUsd    Float // units of currency per 1 USD
+  updatedAt DateTime @updatedAt
+}
+
+model Calculation {
+  id        String   @id @default(cuid())
+  shareId   String   @unique
+  userId    String?
+  label     String?
+  input     Json
+  result    Json
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+// ───────────────────────── Content ─────────────────────────
+
+model BlogPost {
+  id           String                @id @default(cuid())
+  category     BlogCategory
+  authorName   String
+  coverImage   String
+  published    Boolean               @default(true)
+  publishedAt  DateTime              @default(now())
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  translations BlogPostTranslation[]
+}
+
+model BlogPostTranslation {
+  id             String   @id @default(cuid())
+  postId         String
+  locale         Locale
+  slug           String
+  title          String
+  excerpt        String
+  content        String // Markdown
+  seoTitle       String?
+  seoDescription String?
+  post           BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, locale])
+  @@unique([locale, slug])
+}
+
+/// Editable homepage sections & static page blocks, one JSON document per key+locale.
+model SiteContent {
+  id        String   @id @default(cuid())
+  key       String
+  locale    Locale
+  data      Json
+  updatedAt DateTime @updatedAt
+
+  @@unique([key, locale])
+}
+
+/// Per-route SEO overrides managed in /admin/seo.
+model SeoEntry {
+  id          String   @id @default(cuid())
+  path        String // e.g. "/", "/cars", "/calculator"
+  locale      Locale
+  title       String?
+  description String?
+  keywords    String?
+  ogImage     String?
+  canonical   String?
+  noindex     Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
+
+  @@unique([path, locale])
+}
+
+model Setting {
+  key   String @id
+  value Json
+}
