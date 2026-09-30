@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { Inter, Inter_Tight, Noto_Sans_Armenian } from "next/font/google";
 import "../globals.css";
-import { isLocale, locales, type Locale } from "@/i18n/config";
+import { isLocale, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -15,8 +15,10 @@ const inter = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-inter", 
 const interTight = Inter_Tight({ subsets: ["latin", "cyrillic"], variable: "--font-display-latin", display: "optional", weight: ["500", "600", "700"] });
 const armenian = Noto_Sans_Armenian({ subsets: ["armenian"], variable: "--font-armenian", display: "optional" });
 
+// Empty list: pages render (and get cached via ISR) on first request, so `next build`
+// never needs the database — required for CI/Netlify builds where the DB isn't reachable.
 export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
+  return [];
 }
 
 
