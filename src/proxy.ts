@@ -1,14 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { defaultLocale, isLocale, type Locale } from "@/i18n/config";
+import { defaultLocale, isLocale } from "@/i18n/config";
 import { SESSION_COOKIE, verifySession } from "@/server/auth/token";
-
-const LOCALE_COOKIE = "NEXT_LOCALE";
-
-/** The language the visitor last chose on the site, otherwise Armenian (browser language is ignored). */
-function preferredLocale(req: NextRequest): Locale {
-  const fromCookie = req.cookies.get(LOCALE_COOKIE)?.value;
-  return isLocale(fromCookie) ? fromCookie : defaultLocale;
-}
 
 export async function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
@@ -28,11 +20,12 @@ export async function proxy(req: NextRequest) {
 
   const first = pathname.split("/")[1];
 
-  // ── No locale prefix → redirect to the preferred one (e.g. /dashboard → /hy/dashboard) ──
+  // ── No locale prefix → Armenian, always (e.g. / → /hy, /dashboard → /hy/dashboard).
+  //    Visitors switch language with the header switcher; the URL then carries it. ──
   if (!isLocale(first)) {
     const url = req.nextUrl.clone();
-    url.pathname = `/${preferredLocale(req)}${pathname === "/" ? "" : pathname}`;
-    // Temporary: the target depends on the visitor's cookie, so browsers must not cache it.
+    url.pathname = `/${defaultLocale}${pathname === "/" ? "" : pathname}`;
+    // 307, not 308: browsers must not cache this, so changing the default later takes effect.
     return NextResponse.redirect(url, 307);
   }
 
@@ -48,11 +41,7 @@ export async function proxy(req: NextRequest) {
     }
   }
 
-  const res = NextResponse.next();
-  if (req.cookies.get(LOCALE_COOKIE)?.value !== first) {
-    res.cookies.set(LOCALE_COOKIE, first, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
-  }
-  return res;
+  return NextResponse.next();
 }
 
 export const config = {
