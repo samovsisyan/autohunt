@@ -8,7 +8,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/toast";
 import { JsonLd } from "@/components/seo/json-ld";
-import { ThemeScript, themeColors } from "@/components/layout/theme-script";
+import { ThemeScript, defaultTheme, themeColors } from "@/components/layout/theme-script";
 import { getContact } from "@/server/services/content.service";
 import { absoluteUrl, siteUrl } from "@/lib/site";
 
@@ -22,11 +22,8 @@ export function generateStaticParams() {
 
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: themeColors.light },
-    { media: "(prefers-color-scheme: dark)", color: themeColors.dark },
-  ],
-  colorScheme: "dark light",
+  themeColor: themeColors[defaultTheme],
+  colorScheme: "light dark",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -68,7 +65,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
   };
 
   return (
-    <html lang={locale} data-theme="dark" data-scroll-behavior="smooth" className={`${inter.variable} ${interTight.variable} ${armenian.variable}`} suppressHydrationWarning>
+    <html lang={locale} data-theme={defaultTheme} data-scroll-behavior="smooth" className={`${inter.variable} ${interTight.variable} ${armenian.variable}`} suppressHydrationWarning>
       <head>
         <ThemeScript />
       </head>

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Inter_Tight, Noto_Sans_Armenian } from "next/font/google";
 import "../globals.css";
 import { Toaster } from "@/components/ui/toast";
-import { ThemeScript, themeColors } from "@/components/layout/theme-script";
+import { ThemeScript, defaultTheme, themeColors } from "@/components/layout/theme-script";
 import { AdminI18nProvider } from "@/components/admin/i18n";
 import { getAdminT } from "@/i18n/admin";
 
@@ -16,17 +16,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: themeColors.light },
-    { media: "(prefers-color-scheme: dark)", color: themeColors.dark },
-  ],
-  colorScheme: "dark light",
+  themeColor: themeColors[defaultTheme],
+  colorScheme: "light dark",
 };
 
 export default async function AdminRootLayout({ children }: { children: React.ReactNode }) {
   const { t, locale } = await getAdminT();
   return (
-    <html lang={locale} data-theme="dark" data-scroll-behavior="smooth" className={`${inter.variable} ${interTight.variable} ${armenian.variable}`} suppressHydrationWarning>
+    <html lang={locale} data-theme={defaultTheme} data-scroll-behavior="smooth" className={`${inter.variable} ${interTight.variable} ${armenian.variable}`} suppressHydrationWarning>
       <head>
         <ThemeScript />
       </head>

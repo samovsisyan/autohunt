@@ -3,11 +3,11 @@
 import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { STORAGE_KEY, themeColors, type Theme } from "./theme-script";
+import { STORAGE_KEY, defaultTheme, themeColors, type Theme } from "./theme-script";
 
 const listeners = new Set<() => void>();
-const readTheme = (): Theme => (document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark");
-const serverTheme = (): Theme => "dark";
+const readTheme = (): Theme => (document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light");
+const serverTheme = (): Theme => defaultTheme;
 const subscribe = (l: () => void) => {
   listeners.add(l);
   const onStorage = (e: StorageEvent) => {

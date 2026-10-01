@@ -4,24 +4,16 @@ import { SESSION_COOKIE, verifySession } from "@/server/auth/token";
 
 const LOCALE_COOKIE = "NEXT_LOCALE";
 
+/** The language the visitor last chose on the site, otherwise Armenian (browser language is ignored). */
 function preferredLocale(req: NextRequest): Locale {
   const fromCookie = req.cookies.get(LOCALE_COOKIE)?.value;
-  if (isLocale(fromCookie)) return fromCookie;
-  const header = req.headers.get("accept-language") ?? "";
-  const ranked = header
-    .split(",")
-    .map((part) => {
-      const [tag, q] = part.trim().split(";q=");
-      return { lang: tag.toLowerCase().split("-")[0], q: q ? Number(q) : 1 };
-    })
-    .sort((a, b) => b.q - a.q);
-  return (ranked.find((r) => isLocale(r.lang))?.lang as Locale) ?? defaultLocale;
+  return isLocale(fromCookie) ? fromCookie : defaultLocale;
 }
 
 export async function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
-  // ── Admin: role-gated, English-only, not localized ──
+  // ── Admin: role-gated, not under a locale prefix (its language is a cookie) ──
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     if (pathname === "/admin/login") return NextResponse.next();
     const session = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
@@ -40,7 +32,8 @@ export async function proxy(req: NextRequest) {
   if (!isLocale(first)) {
     const url = req.nextUrl.clone();
     url.pathname = `/${preferredLocale(req)}${pathname === "/" ? "" : pathname}`;
-    return NextResponse.redirect(url, 308);
+    // Temporary: the target depends on the visitor's cookie, so browsers must not cache it.
+    return NextResponse.redirect(url, 307);
   }
 
   // ── Customer dashboard requires a session ──
