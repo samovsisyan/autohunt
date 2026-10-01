@@ -13,6 +13,8 @@ const base = {
   payload: z.record(z.string(), z.unknown()).optional(),
 };
 
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((v) => !Number.isNaN(Date.parse(v)), "Invalid date");
+
 export const requestSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("CAR_REQUEST"), carId: z.string().optional(), ...base }),
   z.object({ type: z.literal("FINANCING"), carId: z.string().optional(), ...base }),
@@ -39,6 +41,9 @@ export const requestSchema = z.discriminatedUnion("type", [
     fuel: optionalText(20),
     mileage: optionalText(20),
   }),
+  z
+    .object({ type: z.literal("RENTAL"), carId: z.string().min(1), pickup: isoDate, return: isoDate, ...base })
+    .refine((v) => v.return > v.pickup, { path: ["return"], message: "Return must be after pick-up" }),
   z.object({
     type: z.literal("CORPORATE"),
     ...base,

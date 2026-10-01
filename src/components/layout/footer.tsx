@@ -11,6 +11,7 @@ export function Footer({ locale, t, contact }: { locale: Locale; t: Dictionary; 
       title: t.footer.services,
       links: [
         { href: "/cars", label: t.nav.cars },
+        { href: "/rent", label: t.nav.rent },
         { href: "/import", label: t.nav.import },
         { href: "/calculator", label: t.nav.calculator },
         { href: "/corporate", label: t.nav.corporate },

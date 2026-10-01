@@ -5,7 +5,8 @@ import { href, type Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { formLabels } from "@/i18n/labels";
 import { buildMetadata } from "@/server/seo";
-import { getFeaturedCars, getLatestCars, getCarFacets } from "@/server/services/car.service";
+import { getFeaturedCars, getLatestCars, getCarFacets, getRentalCars } from "@/server/services/car.service";
+import { RentalCard } from "@/components/rent/rental-card";
 import { listPosts } from "@/server/services/blog.service";
 import { getContent, getFaq } from "@/server/services/content.service";
 import { estimate, getCalculatorOptions } from "@/server/calculator/calculator.service";
@@ -42,7 +43,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const locale = (await params).locale as Locale;
   const t = await getDictionary(locale);
 
-  const [hero, cta, trust, featured, latest, facets, posts, faq, options] = await Promise.all([
+  const [hero, cta, trust, featured, latest, facets, posts, faq, options, rentals] = await Promise.all([
     getContent("home.hero", locale, t.hero),
     getContent("home.cta", locale, t.cta),
     getContent("home.trust", locale, t.trust),
@@ -52,6 +53,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
     listPosts(locale, { take: 3 }),
     getFaq(locale),
     getCalculatorOptions(locale),
+    getRentalCars(3),
   ]);
 
   const calcInput = calculatorInputFromParams({ fuel: "HYBRID", year: "2022", price: "12000", engine: "2.5" }, options);
@@ -136,6 +138,30 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
           />
         </div>
       </section>
+
+      {/* Car rental */}
+      {rentals.length > 0 && (
+        <section className="defer-render py-24 sm:py-32">
+          <div className="container-page">
+            <SectionHeader
+              eyebrow={t.rent.eyebrow}
+              title={t.rent.homeTitle}
+              subtitle={t.rent.homeSubtitle}
+              action={
+                <Link href={href(locale, "/rent")} className={buttonClasses("outline")}>
+                  {t.rent.viewAll}
+                  <ArrowRight className="size-4" />
+                </Link>
+              }
+            />
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {rentals.map((car) => (
+                <RentalCard key={car.id} car={car} locale={locale} t={t} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <ProcessSteps t={t} locale={locale} />
       <ImportTeaser t={t} locale={locale} />

@@ -31,7 +31,7 @@ export function Skeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "animate-shimmer rounded-xl bg-[linear-gradient(90deg,rgb(255_255_255/0.03)_0%,rgb(255_255_255/0.07)_50%,rgb(255_255_255/0.03)_100%)] bg-[length:800px_100%]",
+        "animate-shimmer rounded-xl bg-[linear-gradient(90deg,color-mix(in_oklab,var(--color-fg)_4%,transparent)_0%,color-mix(in_oklab,var(--color-fg)_9%,transparent)_50%,color-mix(in_oklab,var(--color-fg)_4%,transparent)_100%)] bg-[length:800px_100%]",
         className,
       )}
     />

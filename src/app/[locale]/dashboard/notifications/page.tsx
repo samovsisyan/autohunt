@@ -41,7 +41,7 @@ export default async function NotificationsPage({ params }: PageProps<"/[locale]
                 </div>
               </div>
             );
-            return <li key={n.id}>{n.link ? <Link href={href(locale, n.link)} className="block hover:bg-white/[0.02]">{body}</Link> : body}</li>;
+            return <li key={n.id}>{n.link ? <Link href={href(locale, n.link)} className="block hover:bg-fg/[0.02]">{body}</Link> : body}</li>;
           })}
         </ul>
       ) : (

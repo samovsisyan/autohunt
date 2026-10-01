@@ -3,8 +3,9 @@ import { db } from "@/server/db";
 import { AdminHeader } from "@/components/admin/ui";
 import { ImportEditor } from "@/components/admin/import-editor";
 import { importEditorLookups } from "@/server/actions/admin/lookups";
+import { adminTitle, getAdminT } from "@/i18n/admin";
 
-export const metadata = { title: "Edit import" };
+export const generateMetadata = adminTitle((t) => t.imports.edit);
 
 export default async function EditImportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,9 +14,10 @@ export default async function EditImportPage({ params }: { params: Promise<{ id:
     importEditorLookups(),
   ]);
   if (!imp) notFound();
+  const { t } = await getAdminT();
   return (
     <>
-      <AdminHeader title={`${imp.vehicleTitle} ${imp.vehicleYear}`} description={`${imp.code} · ${imp.customer.name}`} back={{ href: "/admin/imports", label: "Imports" }} />
+      <AdminHeader title={`${imp.vehicleTitle} ${imp.vehicleYear}`} description={`${imp.code} · ${imp.customer.name}`} back={{ href: "/admin/imports", label: t.imports.title }} />
       <ImportEditor
         {...lookups}
         documents={imp.documents.map((d) => ({ id: d.id, title: d.title, url: d.url, type: d.type }))}

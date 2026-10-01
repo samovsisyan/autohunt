@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import {
   Calendar,
   Gauge,
@@ -61,6 +61,7 @@ export default async function CarPage({ params }: PageProps<"/[locale]/cars/[slu
   const locale = l as Locale;
   const [t, car] = await Promise.all([getDictionary(locale), getCarBySlug(slug, locale)]);
   if (!car) notFound();
+  if (car.listingType === "RENT") permanentRedirect(href(locale, `/rent/${car.slug}`));
   const similar = await getSimilarCars(car);
 
   const title = carTitle(car);
@@ -171,7 +172,7 @@ export default async function CarPage({ params }: PageProps<"/[locale]/cars/[slu
               </div>
               <ul className="mt-6 grid grid-cols-2 gap-2.5">
                 {keyFacts.map((f) => (
-                  <li key={f.label} className="flex items-center gap-2.5 rounded-xl bg-white/[0.03] px-3 py-2.5">
+                  <li key={f.label} className="flex items-center gap-2.5 rounded-xl bg-fg/[0.03] px-3 py-2.5">
                     <f.icon className="size-4 shrink-0 text-subtle" aria-hidden />
                     <div className="min-w-0">
                       <p className="text-[11px] text-subtle">{f.label}</p>
@@ -258,7 +259,7 @@ export default async function CarPage({ params }: PageProps<"/[locale]/cars/[slu
                 <ul className="mt-4 divide-y divide-line rounded-2xl border border-line">
                   {car.documents.map((d) => (
                     <li key={d.id}>
-                      <a href={d.url} target="_blank" rel="noopener" className="flex items-center justify-between gap-4 px-5 py-4 text-sm hover:bg-white/[0.02]">
+                      <a href={d.url} target="_blank" rel="noopener" className="flex items-center justify-between gap-4 px-5 py-4 text-sm hover:bg-fg/[0.02]">
                         <span className="inline-flex items-center gap-3">
                           <FileText className="size-4 text-subtle" />
                           {t.enums.docType[d.type]}

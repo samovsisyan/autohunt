@@ -12,6 +12,8 @@ import { Panel } from "./ui";
 import { useAdminAction } from "./hooks";
 import { ConfirmButton } from "./confirm-button";
 import { SingleUpload } from "./image-uploader";
+import { useAdminT } from "./i18n";
+import { fmt } from "@/i18n/format";
 
 type L = "hy" | "ru" | "en";
 type Tr = NonNullable<BlogAdminInput["translations"]["en"]>;
@@ -24,6 +26,9 @@ export function BlogEditor({ initial }: { initial: BlogAdminInput }) {
   const [tab, setTab] = useState<L>("hy");
   const [preview, setPreview] = useState<string | null>(null);
   const { run, pending } = useAdminAction();
+  const { t } = useAdminT();
+  const b = t.blogEditor;
+  const lang = tab.toUpperCase();
   const tr = post.translations[tab];
   const setTr = (patch: Partial<Tr> | null) =>
     setPost((p) => ({ ...p, translations: { ...p.translations, [tab]: patch === null ? undefined : { ...(p.translations[tab] ?? emptyTr), ...patch } } }));
@@ -31,13 +36,13 @@ export function BlogEditor({ initial }: { initial: BlogAdminInput }) {
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
       <Panel
-        title="Content"
+        title={b.content}
         actions={
           <div className="flex gap-1">
             {(["hy", "ru", "en"] as const).map((l) => (
               <Chip key={l} active={tab === l} onClick={() => { setTab(l); setPreview(null); }} className="h-8">
                 {l.toUpperCase()}
-                {!post.translations[l] && <span className="size-1.5 rounded-full bg-warning" title="Missing" />}
+                {!post.translations[l] && <span className="size-1.5 rounded-full bg-warning" title={t.common.missing} />}
               </Chip>
             ))}
           </div>
@@ -45,26 +50,26 @@ export function BlogEditor({ initial }: { initial: BlogAdminInput }) {
       >
         {!tr ? (
           <div className="py-10 text-center">
-            <p className="text-sm text-muted">No {tab.toUpperCase()} version yet.</p>
+            <p className="text-sm text-muted">{fmt(b.noVersion, { lang })}</p>
             <Button variant="outline" size="sm" className="mt-4" onClick={() => setTr({})}>
-              Add {tab.toUpperCase()} translation
+              {fmt(b.addTranslation, { lang })}
             </Button>
           </div>
         ) : (
           <div className="space-y-4">
-            <Field label="Title">
+            <Field label={b.title}>
               <Input value={tr.title} onChange={(e) => setTr({ title: e.target.value, ...(tr.slug ? {} : {}) })} onBlur={() => !tr.slug && setTr({ slug: slugify(tr.title) })} />
             </Field>
-            <Field label="Slug" hint={`/${tab}/blog/${tr.slug || "…"} — latin letters for clean URLs`}>
+            <Field label={b.slug} hint={fmt(b.slugHint, { lang: tab, slug: tr.slug || "…" })}>
               <Input value={tr.slug} onChange={(e) => setTr({ slug: slugify(e.target.value) })} />
             </Field>
-            <Field label="Excerpt">
+            <Field label={b.excerpt}>
               <Textarea rows={2} value={tr.excerpt} onChange={(e) => setTr({ excerpt: e.target.value })} />
             </Field>
             <Field
               label={
                 <span className="flex items-center justify-between">
-                  Content (Markdown: ## headings, **bold**, lists, tables, [links](/en/calculator))
+                  {b.markdown}
                   <button
                     type="button"
                     className="inline-flex items-center gap-1 text-accent"
@@ -75,7 +80,7 @@ export function BlogEditor({ initial }: { initial: BlogAdminInput }) {
                     }}
                   >
                     {preview !== null ? <Pencil className="size-3.5" /> : <Eye className="size-3.5" />}
-                    {preview !== null ? "Edit" : "Preview"}
+                    {preview !== null ? t.common.edit : t.common.preview}
                   </button>
                 </span>
               }
@@ -87,52 +92,52 @@ export function BlogEditor({ initial }: { initial: BlogAdminInput }) {
               )}
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="SEO title" hint={`${(tr.seoTitle ?? "").length}/60`}>
+              <Field label={b.seoTitle} hint={`${(tr.seoTitle ?? "").length}/60`}>
                 <Input value={tr.seoTitle ?? ""} onChange={(e) => setTr({ seoTitle: e.target.value })} />
               </Field>
-              <Field label="SEO description" hint={`${(tr.seoDescription ?? "").length}/160`}>
+              <Field label={b.seoDescription} hint={`${(tr.seoDescription ?? "").length}/160`}>
                 <Input value={tr.seoDescription ?? ""} onChange={(e) => setTr({ seoDescription: e.target.value })} />
               </Field>
             </div>
             <button type="button" onClick={() => setTr(null)} className="text-xs text-subtle hover:text-danger">
-              Remove {tab.toUpperCase()} translation
+              {fmt(b.removeTranslation, { lang })}
             </button>
           </div>
         )}
       </Panel>
 
       <div className="space-y-6 xl:sticky xl:top-8 xl:self-start">
-        <Panel title="Publishing">
+        <Panel title={b.publishing}>
           <div className="space-y-4">
-            <Field label="Category">
-              <Select value={post.category} onChange={(e) => setPost({ ...post, category: e.target.value as BlogAdminInput["category"] })} options={CATS.map((c) => ({ value: c, label: c.replace("_", " ").toLowerCase() }))} />
+            <Field label={b.category}>
+              <Select value={post.category} onChange={(e) => setPost({ ...post, category: e.target.value as BlogAdminInput["category"] })} options={CATS.map((c) => ({ value: c, label: t.enums.blogCategory[c] ?? c }))} />
             </Field>
-            <Field label="Author">
+            <Field label={b.author}>
               <Input value={post.authorName} onChange={(e) => setPost({ ...post, authorName: e.target.value })} />
             </Field>
-            <Field label="Publish date">
+            <Field label={b.publishDate}>
               <Input type="date" value={post.publishedAt.slice(0, 10)} onChange={(e) => setPost({ ...post, publishedAt: e.target.value })} />
             </Field>
-            <Field label="Featured image">
+            <Field label={b.featuredImage}>
               <SingleUpload value={post.coverImage} folder="blog" onChange={(v) => setPost({ ...post, coverImage: v })} />
             </Field>
             <label className="flex items-center justify-between rounded-xl border border-line px-4 py-3 text-sm">
-              Published
+              {b.published}
               <input type="checkbox" checked={post.published} onChange={(e) => setPost({ ...post, published: e.target.checked })} className="accent-[var(--color-accent)]" />
             </label>
           </div>
           <div className="mt-5 grid gap-2">
-            <Button loading={pending} onClick={() => run(() => saveBlogPostAction(post), { success: "Article saved", onSuccess: (d) => !post.id && d && router.replace(`/admin/blog/${d.id}`) })}>
-              <Save className="size-4" /> Save article
+            <Button loading={pending} onClick={() => run(() => saveBlogPostAction(post), { success: b.savedToast, onSuccess: (d) => !post.id && d && router.replace(`/admin/blog/${d.id}`) })}>
+              <Save className="size-4" /> {b.save}
             </Button>
             {post.id && tr?.slug && (
               <a href={`/${tab}/blog/${tr.slug}`} target="_blank" className="inline-flex h-10 items-center justify-center gap-2 text-sm text-muted hover:text-fg">
-                <ExternalLink className="size-4" /> View {tab.toUpperCase()}
+                <ExternalLink className="size-4" /> {fmt(b.view, { lang })}
               </a>
             )}
             {post.id && (
-              <ConfirmButton title="Delete article?" message="All language versions will be removed." onConfirm={() => run(() => deleteBlogPostAction(post.id!), { success: "Deleted", onSuccess: () => router.replace("/admin/blog") })}>
-                <Trash2 className="size-4 text-danger" /> Delete
+              <ConfirmButton title={b.deleteTitle} message={b.deleteMessage} onConfirm={() => run(() => deleteBlogPostAction(post.id!), { success: t.common.deleted, onSuccess: () => router.replace("/admin/blog") })}>
+                <Trash2 className="size-4 text-danger" /> {t.common.delete}
               </ConfirmButton>
             )}
           </div>

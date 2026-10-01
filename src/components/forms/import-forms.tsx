@@ -31,7 +31,7 @@ export function ImportForms({
 
   return (
     <div id="search" className="scroll-mt-24 rounded-3xl border border-line bg-surface p-6 sm:p-10">
-      <div className="mb-8 grid grid-cols-2 gap-1 rounded-2xl bg-white/[0.03] p-1" role="tablist">
+      <div className="mb-8 grid grid-cols-2 gap-1 rounded-2xl bg-fg/[0.03] p-1" role="tablist">
         {[
           { id: "lot" as const, label: t.haveCar, icon: Gavel },
           { id: "search" as const, label: t.noCar, icon: Search },
@@ -41,7 +41,7 @@ export function ImportForms({
             role="tab"
             aria-selected={mode === id}
             onClick={() => setMode(id)}
-            className={cn("inline-flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-medium transition-colors", mode === id ? "bg-white/10 text-fg" : "text-subtle hover:text-fg")}
+            className={cn("inline-flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-medium transition-colors", mode === id ? "bg-fg/10 text-fg" : "text-subtle hover:text-fg")}
           >
             <Icon className="size-4" />
             <span className="truncate">{label}</span>

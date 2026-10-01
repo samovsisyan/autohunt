@@ -17,8 +17,8 @@ export default async function DocumentsPage({ params }: PageProps<"/[locale]/das
         <ul className="divide-y divide-line overflow-hidden rounded-3xl border border-line bg-surface">
           {docs.map((d) => (
             <li key={d.id}>
-              <a href={d.url} target="_blank" rel="noopener" className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/[0.02]">
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/5 text-accent">
+              <a href={d.url} target="_blank" rel="noopener" className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-fg/[0.02]">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-fg/5 text-accent">
                   <FileText className="size-4" />
                 </span>
                 <div className="min-w-0 flex-1">

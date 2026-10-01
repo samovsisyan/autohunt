@@ -31,7 +31,7 @@ export function CarRequestActions({
 
   const modal = (
     <Modal open={!!open} onClose={() => setOpen(null)} title={open === "FINANCING" ? labels.financing : labels.request} closeLabel={labels.close}>
-      <div className="mb-5 flex items-center justify-between rounded-2xl border border-line bg-white/[0.03] px-4 py-3 text-sm">
+      <div className="mb-5 flex items-center justify-between rounded-2xl border border-line bg-fg/[0.03] px-4 py-3 text-sm">
         <span className="text-muted">{carTitle}</span>
         <span className="tabular font-semibold">{price}</span>
       </div>

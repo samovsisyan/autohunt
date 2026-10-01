@@ -10,9 +10,11 @@ import { cn } from "@/lib/cn";
 import { buttonClasses } from "@/components/ui/button";
 import { Logo } from "./logo";
 import { LanguageSwitcher } from "./language-switcher";
+import { ThemeToggle } from "./theme";
 
 export interface HeaderLabels {
   cars: string;
+  rent: string;
   import: string;
   calculator: string;
   corporate: string;
@@ -26,6 +28,8 @@ export interface HeaderLabels {
   close: string;
   language: string;
   saved: string;
+  lightTheme: string;
+  darkTheme: string;
 }
 
 const subscribeCookie = (cb: () => void) => {
@@ -83,6 +87,7 @@ export function Header({ locale, t }: { locale: Locale; t: HeaderLabels }) {
 
   const nav = [
     { href: "/cars", label: t.cars },
+    { href: "/rent", label: t.rent },
     { href: "/import", label: t.import },
     { href: "/calculator", label: t.calculator },
     { href: "/corporate", label: t.corporate },
@@ -98,7 +103,7 @@ export function Header({ locale, t }: { locale: Locale; t: HeaderLabels }) {
       <header
         className={cn(
           "fixed inset-x-0 top-0 z-50 transition-all duration-300",
-          scrolled || open ? "glass border-x-0 border-t-0" : "border-b border-transparent bg-gradient-to-b from-black/50 to-transparent",
+          scrolled || open ? "border-b border-line bg-bg/90 shadow-[0_8px_24px_-16px_rgb(0_0_0/0.25)] backdrop-blur-xl backdrop-saturate-150" : "border-b border-transparent bg-gradient-to-b from-bg/60 to-transparent",
         )}
       >
         <div className="container-page flex h-16 items-center gap-6 lg:h-18">
@@ -124,9 +129,10 @@ export function Header({ locale, t }: { locale: Locale; t: HeaderLabels }) {
 
           <div className="ml-auto flex items-center gap-2 xl:ml-0">
             <LanguageSwitcher current={locale} className="hidden md:inline-flex" />
+            <ThemeToggle labels={{ light: t.lightTheme, dark: t.darkTheme }} />
             <Link
               href={href(locale, "/favorites")}
-              className="relative hidden size-10 place-items-center rounded-xl text-muted transition-colors hover:bg-white/5 hover:text-fg sm:grid"
+              className="relative hidden size-10 place-items-center rounded-xl text-muted transition-colors hover:bg-fg/5 hover:text-fg sm:grid"
               aria-label={t.saved}
             >
               <Heart className="size-[1.15rem]" />
@@ -138,7 +144,7 @@ export function Header({ locale, t }: { locale: Locale; t: HeaderLabels }) {
             </Link>
             <Link
               href={accountHref}
-              className="hidden h-10 items-center gap-2 rounded-xl px-3 text-sm whitespace-nowrap text-muted transition-colors hover:bg-white/5 hover:text-fg sm:inline-flex"
+              className="hidden h-10 items-center gap-2 rounded-xl px-3 text-sm whitespace-nowrap text-muted transition-colors hover:bg-fg/5 hover:text-fg sm:inline-flex"
             >
               <User className="size-4" />
               {user ? user.n || t.dashboard : t.login}
@@ -147,7 +153,7 @@ export function Header({ locale, t }: { locale: Locale; t: HeaderLabels }) {
               {t.cta}
             </Link>
             <button
-              className="grid size-10 place-items-center rounded-xl text-fg hover:bg-white/5 xl:hidden"
+              className="grid size-10 place-items-center rounded-xl text-fg hover:bg-fg/5 xl:hidden"
               onClick={() => setOpen((v) => !v)}
               aria-expanded={open}
               aria-controls="mobile-menu"

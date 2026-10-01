@@ -28,7 +28,7 @@ export function DashboardNav({ base, labels, unread }: { base: string; labels: R
           aria-current={active(path) ? "page" : undefined}
           className={cn(
             "inline-flex h-10 shrink-0 items-center gap-3 rounded-xl px-3.5 text-sm transition-colors",
-            active(path) ? "bg-white/[0.07] text-fg" : "text-muted hover:bg-white/[0.03] hover:text-fg",
+            active(path) ? "bg-fg/[0.07] text-fg" : "text-muted hover:bg-fg/[0.03] hover:text-fg",
           )}
         >
           <Icon className={cn("size-4", active(path) && "text-accent")} />

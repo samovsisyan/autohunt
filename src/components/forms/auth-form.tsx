@@ -50,9 +50,9 @@ export function AuthForm({
       {mode === "register" && (
         <>
           <Field label={t.accountType}>
-            <div className="grid grid-cols-2 gap-1 rounded-xl bg-white/[0.03] p-1">
+            <div className="grid grid-cols-2 gap-1 rounded-xl bg-fg/[0.03] p-1">
               {(["CUSTOMER", "CORPORATE"] as const).map((v) => (
-                <button key={v} type="button" onClick={() => setAccountType(v)} aria-pressed={accountType === v} className={cn("h-10 rounded-lg text-sm transition-colors", accountType === v ? "bg-white/10 text-fg" : "text-subtle")}>
+                <button key={v} type="button" onClick={() => setAccountType(v)} aria-pressed={accountType === v} className={cn("h-10 rounded-lg text-sm transition-colors", accountType === v ? "bg-fg/10 text-fg" : "text-subtle")}>
                   {v === "CUSTOMER" ? t.individual : t.corporate}
                 </button>
               ))}

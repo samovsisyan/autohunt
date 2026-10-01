@@ -302,6 +302,45 @@ async function main() {
     carIds[c.slug] = created.id;
   }
 
+  console.log("Rental cars…");
+  const rentals = [
+    { slug: "rent-toyota-camry-2021", brand: "Toyota", model: "Camry", trim: "LE", year: 2021, engineVolume: 2.5, fuel: "GASOLINE", bodyType: "SEDAN", price: 45, rentDeposit: 300, rentMinDays: 2, location: "Yerevan", image: "/images/cars/toyota-camry.jpg" },
+    { slug: "rent-hyundai-accent-2020", brand: "Hyundai", model: "Accent", trim: null, year: 2020, engineVolume: 1.6, fuel: "GASOLINE", bodyType: "SEDAN", price: 30, rentDeposit: 200, rentMinDays: 1, location: "Gyumri", image: "/images/cars/hyundai-accent.jpg" },
+    { slug: "rent-nissan-juke-2019", brand: "Nissan", model: "Juke", trim: "SV", year: 2019, engineVolume: 1.6, fuel: "GASOLINE", bodyType: "CROSSOVER", price: 38, rentDeposit: 250, rentMinDays: 3, location: "Gyumri", image: "/images/cars/nissan-juke.jpg" },
+  ] as const;
+  for (const r of rentals) {
+    await db.car.create({
+      data: {
+        slug: r.slug,
+        listingType: "RENT",
+        brand: r.brand,
+        model: r.model,
+        trim: r.trim,
+        year: r.year,
+        mileage: 60000,
+        mileageUnit: "KM",
+        engineVolume: r.engineVolume,
+        fuel: r.fuel,
+        transmission: "AUTOMATIC",
+        drive: "FWD",
+        bodyType: r.bodyType,
+        price: r.price,
+        rentDeposit: r.rentDeposit,
+        rentMinDays: r.rentMinDays,
+        location: r.location,
+        features: ["Air conditioning", "Bluetooth", "Rear camera"],
+        images: { create: [{ url: r.image, alt: `${r.year} ${r.brand} ${r.model}`, sortOrder: 0 }] },
+        translations: {
+          create: [
+            { locale: "hy", description: `${r.brand} ${r.model} ${r.year} — հարմարավետ մեքենա քաղաքի և ճամփորդությունների համար։` },
+            { locale: "ru", description: `${r.brand} ${r.model} ${r.year} — удобный автомобиль для города и поездок.` },
+            { locale: "en", description: `${r.year} ${r.brand} ${r.model} — a comfortable car for the city and road trips.` },
+          ],
+        },
+      },
+    });
+  }
+
   console.log("Imports & customer data…");
   const copart = await db.auction.findUniqueOrThrow({ where: { code: "COPART" } });
   const iaai = await db.auction.findUniqueOrThrow({ where: { code: "IAAI" } });

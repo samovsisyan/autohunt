@@ -25,7 +25,7 @@ export default async function LoginPage({ params, searchParams }: PageProps<"/[l
           <div className="mt-10">
             <AuthForm mode="login" locale={locale} t={t.auth} forms={t.forms} next={typeof next === "string" ? next : undefined} errorText={t.common.error} />
           </div>
-          <p className="mt-8 rounded-xl border border-line bg-white/[0.02] px-4 py-3 text-center text-xs text-subtle">{t.auth.demo}</p>
+          <p className="mt-8 rounded-xl border border-line bg-fg/[0.02] px-4 py-3 text-center text-xs text-subtle">{t.auth.demo}</p>
         </div>
       </div>
       <div className="relative hidden lg:block">

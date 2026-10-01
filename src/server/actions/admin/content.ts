@@ -4,7 +4,7 @@ import { z } from "zod";
 import { db } from "@/server/db";
 import { blogAdminSchema, seoAdminSchema, type BlogAdminInput } from "@/server/validation/admin";
 import { renderMarkdown } from "@/server/markdown";
-import { adminAction, revalidatePublic } from "./_utils";
+import { AdminError, adminAction, revalidatePublic } from "./_utils";
 
 export async function saveBlogPostAction(input: BlogAdminInput) {
   return adminAction(async () => {
@@ -40,7 +40,7 @@ export async function saveSiteContentAction(key: string, locale: "hy" | "ru" | "
     const k = z.string().regex(/^[a-z0-9.]+$/).max(60).parse(key);
     const l = z.enum(["hy", "ru", "en"]).parse(locale);
     const json = z.record(z.string(), z.unknown()).parse(data);
-    if (JSON.stringify(json).length > 50000) throw new Error("Content too large");
+    if (JSON.stringify(json).length > 50000) throw new AdminError("contentTooLarge");
     await db.siteContent.upsert({ where: { key_locale: { key: k, locale: l } }, create: { key: k, locale: l, data: json as object }, update: { data: json as object } });
     revalidatePublic();
   });

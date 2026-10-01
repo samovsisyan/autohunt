@@ -20,7 +20,7 @@ export function ImportTimeline({ events, locale, t, orientation = "vertical" }: 
     const progress = events.every((e) => e.status === "DONE") ? 100 : ((Math.max(doneCount, currentIdx) + 0.5) / events.length) * 100;
     return (
       <div>
-        <div className="relative h-1.5 overflow-hidden rounded-full bg-white/5">
+        <div className="relative h-1.5 overflow-hidden rounded-full bg-fg/5">
           <div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-positive to-accent transition-[width] duration-1000" style={{ width: `${progress}%` }} />
         </div>
         <ol className="mt-3 grid text-[10px] text-subtle" style={{ gridTemplateColumns: `repeat(${events.length}, minmax(0, 1fr))` }}>
@@ -69,7 +69,7 @@ export function ImportTimeline({ events, locale, t, orientation = "vertical" }: 
                   <MapPin className="size-3.5 shrink-0" /> {e.location}
                 </p>
               )}
-              {e.note && <p className={cn("mt-2 rounded-xl px-3 py-2 text-sm", e.status === "CURRENT" ? "border border-accent/20 bg-accent-soft text-fg" : "bg-white/[0.03] text-muted")}>{e.note}</p>}
+              {e.note && <p className={cn("mt-2 rounded-xl px-3 py-2 text-sm", e.status === "CURRENT" ? "border border-accent/20 bg-accent-soft text-fg" : "bg-fg/[0.03] text-muted")}>{e.note}</p>}
             </div>
           </li>
         );

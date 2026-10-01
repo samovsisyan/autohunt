@@ -66,7 +66,7 @@ export function QuickSearch({
                 onClick={() => setTab(id)}
                 className={cn(
                   "inline-flex h-10 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-medium transition-colors sm:flex-none sm:px-5",
-                  tab === id ? "bg-white/8 text-fg" : "text-subtle hover:text-fg",
+                  tab === id ? "bg-fg/8 text-fg" : "text-subtle hover:text-fg",
                 )}
               >
                 <Icon className="size-4" />

@@ -8,6 +8,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/toast";
 import { JsonLd } from "@/components/seo/json-ld";
+import { ThemeScript, themeColors } from "@/components/layout/theme-script";
 import { getContact } from "@/server/services/content.service";
 import { absoluteUrl, siteUrl } from "@/lib/site";
 
@@ -21,8 +22,11 @@ export function generateStaticParams() {
 
 
 export const viewport: Viewport = {
-  themeColor: "#07080a",
-  colorScheme: "dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: themeColors.light },
+    { media: "(prefers-color-scheme: dark)", color: themeColors.dark },
+  ],
+  colorScheme: "dark light",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -64,7 +68,10 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
   };
 
   return (
-    <html lang={locale} data-scroll-behavior="smooth" className={`${inter.variable} ${interTight.variable} ${armenian.variable}`}>
+    <html lang={locale} data-theme="dark" data-scroll-behavior="smooth" className={`${inter.variable} ${interTight.variable} ${armenian.variable}`} suppressHydrationWarning>
+      <head>
+        <ThemeScript />
+      </head>
       <body className="min-h-dvh overflow-x-clip">
         <a href="#main" className="sr-only z-[100] rounded-lg bg-fg px-4 py-2 text-bg focus:not-sr-only focus:fixed focus:top-3 focus:left-3">
           Skip to content

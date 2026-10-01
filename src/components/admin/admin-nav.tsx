@@ -20,39 +20,43 @@ import {
   LogOut,
 } from "lucide-react";
 import { Logo } from "@/components/layout/logo";
+import { ThemeToggle } from "@/components/layout/theme";
 import { cn } from "@/lib/cn";
+import { useAdminT } from "./i18n";
+import { AdminLocaleSwitcher } from "./locale-switcher";
 
 const groups = [
   {
-    title: "Overview",
-    items: [{ href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true }],
+    title: "overview",
+    items: [{ href: "/admin", label: "dashboard", icon: LayoutDashboard, exact: true }],
   },
   {
-    title: "Business",
+    title: "business",
     items: [
-      { href: "/admin/cars", label: "Cars", icon: Car },
-      { href: "/admin/imports", label: "Imports", icon: Ship },
-      { href: "/admin/requests", label: "Requests", icon: Inbox, badgeKey: "requests" as const },
-      { href: "/admin/customers", label: "Customers", icon: Users },
+      { href: "/admin/cars", label: "cars", icon: Car },
+      { href: "/admin/imports", label: "imports", icon: Ship },
+      { href: "/admin/requests", label: "requests", icon: Inbox, badgeKey: "requests" as const },
+      { href: "/admin/customers", label: "customers", icon: Users },
     ],
   },
   {
-    title: "Configuration",
-    items: [{ href: "/admin/calculator", label: "Calculator settings", icon: Calculator }],
+    title: "configuration",
+    items: [{ href: "/admin/calculator", label: "calculator", icon: Calculator }],
   },
   {
-    title: "Content",
+    title: "content",
     items: [
-      { href: "/admin/blog", label: "Blog", icon: Newspaper },
-      { href: "/admin/pages", label: "Pages", icon: LayoutTemplate },
-      { href: "/admin/seo", label: "SEO", icon: Search },
-      { href: "/admin/languages", label: "Languages", icon: Languages },
+      { href: "/admin/blog", label: "blog", icon: Newspaper },
+      { href: "/admin/pages", label: "pages", icon: LayoutTemplate },
+      { href: "/admin/seo", label: "seo", icon: Search },
+      { href: "/admin/languages", label: "languages", icon: Languages },
     ],
   },
-];
+] as const;
 
 export function AdminNav({ user, badges }: { user: { name: string; email: string }; badges: { requests: number } }) {
   const pathname = usePathname();
+  const { t } = useAdminT();
   const [open, setOpen] = useState(false);
   const isActive = (href: string, exact?: boolean) => (exact ? pathname === href : pathname === href || pathname.startsWith(href + "/"));
 
@@ -60,7 +64,7 @@ export function AdminNav({ user, badges }: { user: { name: string; email: string
     <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-6">
       {groups.map((g) => (
         <div key={g.title}>
-          <p className="mb-2 px-3 text-[11px] font-medium tracking-[0.14em] text-subtle uppercase">{g.title}</p>
+          <p className="mb-2 px-3 text-[11px] font-medium tracking-[0.14em] text-subtle uppercase">{t.nav[g.title]}</p>
           <ul className="space-y-0.5">
             {g.items.map((item) => {
               const active = isActive(item.href, "exact" in item && item.exact);
@@ -71,10 +75,10 @@ export function AdminNav({ user, badges }: { user: { name: string; email: string
                     href={item.href}
                     onClick={() => setOpen(false)}
                     aria-current={active ? "page" : undefined}
-                    className={cn("flex h-9 items-center gap-3 rounded-lg px-3 text-sm transition-colors", active ? "bg-white/[0.07] text-fg" : "text-muted hover:bg-white/[0.03] hover:text-fg")}
+                    className={cn("flex h-9 items-center gap-3 rounded-lg px-3 text-sm transition-colors", active ? "bg-fg/[0.07] text-fg" : "text-muted hover:bg-fg/[0.03] hover:text-fg")}
                   >
                     <item.icon className={cn("size-4", active && "text-accent")} />
-                    {item.label}
+                    {t.nav[item.label]}
                     {badge > 0 && <span className="ml-auto rounded-full bg-accent px-1.5 text-[11px] font-semibold text-bg">{badge}</span>}
                   </Link>
                 </li>
@@ -88,18 +92,22 @@ export function AdminNav({ user, badges }: { user: { name: string; email: string
 
   const footer = (
     <div className="border-t border-line p-3">
-      <Link href="/hy" target="_blank" className="flex h-9 items-center gap-3 rounded-lg px-3 text-sm text-muted hover:bg-white/[0.03] hover:text-fg">
-        <ExternalLink className="size-4" /> View website
+      <Link href="/hy" target="_blank" className="flex h-9 items-center gap-3 rounded-lg px-3 text-sm text-muted hover:bg-fg/[0.03] hover:text-fg">
+        <ExternalLink className="size-4" /> {t.nav.viewWebsite}
       </Link>
       <button
         onClick={async () => {
           await fetch("/api/auth/logout", { method: "POST" });
           window.location.href = "/admin/login";
         }}
-        className="flex h-9 w-full items-center gap-3 rounded-lg px-3 text-sm text-muted hover:bg-white/[0.03] hover:text-fg"
+        className="flex h-9 w-full items-center gap-3 rounded-lg px-3 text-sm text-muted hover:bg-fg/[0.03] hover:text-fg"
       >
-        <LogOut className="size-4" /> Sign out
+        <LogOut className="size-4" /> {t.nav.signOut}
       </button>
+      <div className="mt-2 flex items-center justify-between gap-2 px-1">
+        <AdminLocaleSwitcher />
+        <ThemeToggle labels={{ light: t.common.lightTheme, dark: t.common.darkTheme }} className="size-9 shrink-0" />
+      </div>
       <div className="mt-2 px-3 py-2">
         <p className="truncate text-sm font-medium">{user.name}</p>
         <p className="truncate text-xs text-subtle">{user.email}</p>
@@ -122,9 +130,12 @@ export function AdminNav({ user, badges }: { user: { name: string; email: string
         <Link href="/admin">
           <Logo />
         </Link>
-        <button onClick={() => setOpen(true)} className="grid size-10 place-items-center rounded-lg hover:bg-white/5" aria-label="Open menu">
-          <Menu className="size-5" />
-        </button>
+        <div className="flex items-center gap-1">
+          <ThemeToggle labels={{ light: t.common.lightTheme, dark: t.common.darkTheme }} />
+          <button onClick={() => setOpen(true)} className="grid size-10 place-items-center rounded-lg hover:bg-fg/5" aria-label={t.nav.openMenu}>
+            <Menu className="size-5" />
+          </button>
+        </div>
       </header>
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
@@ -132,7 +143,7 @@ export function AdminNav({ user, badges }: { user: { name: string; email: string
           <aside className="absolute inset-y-0 left-0 flex w-72 animate-fade-in flex-col border-r border-line bg-surface">
             <div className="flex h-14 items-center justify-between border-b border-line px-4">
               <Logo />
-              <button onClick={() => setOpen(false)} className="grid size-10 place-items-center rounded-lg hover:bg-white/5" aria-label="Close menu">
+              <button onClick={() => setOpen(false)} className="grid size-10 place-items-center rounded-lg hover:bg-fg/5" aria-label={t.nav.closeMenu}>
                 <X className="size-5" />
               </button>
             </div>

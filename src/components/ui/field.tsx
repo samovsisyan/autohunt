@@ -3,7 +3,7 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export const controlClasses =
-  "w-full h-12 rounded-xl border border-line bg-white/[0.03] px-4 text-[0.9375rem] text-fg placeholder:text-subtle transition-colors outline-none hover:border-line-strong focus:border-accent/60 focus:bg-white/[0.05] focus:ring-4 focus:ring-accent/10 disabled:opacity-50 aria-[invalid=true]:border-danger/60";
+  "w-full h-12 rounded-xl border border-line bg-fg/[0.03] px-4 text-[0.9375rem] text-fg placeholder:text-subtle transition-colors outline-none hover:border-line-strong focus:border-accent/60 focus:bg-fg/[0.05] focus:ring-4 focus:ring-accent/10 disabled:opacity-50 aria-[invalid=true]:border-danger/60";
 
 export function Label({ className, ...props }: ComponentProps<"label">) {
   return <label className={cn("mb-1.5 block text-[0.8125rem] font-medium text-muted", className)} {...props} />;

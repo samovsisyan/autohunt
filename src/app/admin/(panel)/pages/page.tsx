@@ -5,31 +5,34 @@ import { contentBlocks } from "@/server/content-registry";
 import { AdminHeader, Panel } from "@/components/admin/ui";
 import { ContentEditor } from "@/components/admin/content-editor";
 import { cn } from "@/lib/cn";
+import { adminTitle, getAdminT } from "@/i18n/admin";
 
-export const metadata = { title: "Pages" };
+export const generateMetadata = adminTitle((t) => t.pages.title);
 
 export default async function PagesAdmin({ searchParams }: { searchParams: Promise<{ key?: string; locale?: string }> }) {
   const sp = await searchParams;
   const block = contentBlocks.find((b) => b.key === sp.key) ?? contentBlocks[0];
   const locale = (["hy", "ru", "en"] as const).find((l) => l === sp.locale) ?? "hy";
-  const [t, row, overrides] = await Promise.all([
+  const [t, row, overrides, { t: at }] = await Promise.all([
     getDictionary(locale),
     db.siteContent.findUnique({ where: { key_locale: { key: block.key, locale } } }),
     db.siteContent.findMany({ select: { key: true, locale: true } }),
+    getAdminT(),
   ]);
+  const blockText = (b: (typeof contentBlocks)[number]) => at.pages.blocks[b.key] ?? { title: b.title, description: b.description };
   const value = { ...block.defaults(t), ...((row?.data as object) ?? {}) };
 
   return (
     <>
-      <AdminHeader title="Pages" description="Homepage sections and site-wide content, per language. Changes publish immediately." />
+      <AdminHeader title={at.pages.title} description={at.pages.subtitle} />
       <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
         <nav className="space-y-1 lg:sticky lg:top-8 lg:self-start">
           {contentBlocks.map((b) => (
-            <Link key={b.key} href={`/admin/pages?key=${b.key}&locale=${locale}`} className={cn("block rounded-lg px-3 py-2.5 text-sm", b.key === block.key ? "bg-white/[0.07] text-fg" : "text-muted hover:text-fg")}>
-              {b.title}
+            <Link key={b.key} href={`/admin/pages?key=${b.key}&locale=${locale}`} className={cn("block rounded-lg px-3 py-2.5 text-sm", b.key === block.key ? "bg-fg/[0.07] text-fg" : "text-muted hover:text-fg")}>
+              {blockText(b).title}
               <span className="mt-1 flex gap-1">
                 {(["hy", "ru", "en"] as const).map((l) => (
-                  <span key={l} className={cn("rounded px-1 text-[9px] uppercase", overrides.some((o) => o.key === b.key && o.locale === l) ? "bg-accent-soft text-accent" : "bg-white/5 text-subtle")}>
+                  <span key={l} className={cn("rounded px-1 text-[9px] uppercase", overrides.some((o) => o.key === b.key && o.locale === l) ? "bg-accent-soft text-accent" : "bg-fg/5 text-subtle")}>
                     {l}
                   </span>
                 ))}
@@ -38,8 +41,8 @@ export default async function PagesAdmin({ searchParams }: { searchParams: Promi
           ))}
         </nav>
         <Panel
-          title={block.title}
-          description={block.description}
+          title={blockText(block).title}
+          description={blockText(block).description}
           actions={
             <div className="flex gap-1">
               {(["hy", "ru", "en"] as const).map((l) => (

@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 
 /** Color per cost group: the car itself vs. logistics vs. state charges vs. our fee. */
 export const lineColors: Record<LineKey, string> = {
-  carPrice: "#e8ebef",
+  carPrice: "var(--color-chart-car)",
   auctionFees: "#5fd4f4",
   inlandTransport: "#3fb3d9",
   shipping: "#2a8fbf",
@@ -35,7 +35,7 @@ export function CostBreakdown({
   return (
     <div className={className}>
       {showStack && (
-        <div className="mb-6 flex h-2.5 w-full overflow-hidden rounded-full bg-white/5" role="img" aria-label={t.breakdownTitle}>
+        <div className="mb-6 flex h-2.5 w-full overflow-hidden rounded-full bg-fg/5" role="img" aria-label={t.breakdownTitle}>
           {lines.map((l) => (
             <span
               key={l.key}
@@ -57,7 +57,7 @@ export function CostBreakdown({
               <span className="tabular font-medium text-fg">{format(l.amount)}</span>
             </div>
             {!compact && (
-              <div className="mt-2 ml-4.5 h-1 overflow-hidden rounded-full bg-white/[0.04]">
+              <div className="mt-2 ml-4.5 h-1 overflow-hidden rounded-full bg-fg/[0.04]">
                 <div
                   className="h-full rounded-full transition-[width] duration-700 ease-out"
                   style={{ width: `${(l.amount / max) * 100}%`, background: lineColors[l.key], opacity: 0.55 }}

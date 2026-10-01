@@ -6,7 +6,7 @@ import camry from "../../../public/images/cars/toyota-camry.jpg";
 /** Pure-CSS smartphone rendering of the AutoHunt app (no screenshot asset needed). */
 export function PhoneMockup({ t }: { t: Dictionary["appSection"]["mock"] }) {
   return (
-    <div className="relative mx-auto w-[300px] sm:w-[320px]" aria-hidden>
+    <div className="relative mx-auto w-[300px] sm:w-[320px]" data-theme="dark" aria-hidden>
       <div className="absolute -inset-10 rounded-full bg-accent/10 blur-3xl" />
       <div className="relative rounded-[3rem] border border-white/15 bg-[#0b0c0e] p-3 shadow-[0_40px_80px_-20px_rgb(0_0_0/0.9),inset_0_0_0_1px_rgb(255_255_255/0.04)]">
         <div className="relative overflow-hidden rounded-[2.4rem] bg-bg">
@@ -17,7 +17,7 @@ export function PhoneMockup({ t }: { t: Dictionary["appSection"]["mock"] }) {
                 <p className="text-[10px] text-subtle">{t.greeting}</p>
                 <p className="font-display text-sm font-semibold">Armen</p>
               </div>
-              <span className="relative grid size-8 place-items-center rounded-full bg-white/5">
+              <span className="relative grid size-8 place-items-center rounded-full bg-fg/5">
                 <Bell className="size-3.5" />
                 <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-accent" />
               </span>
@@ -43,7 +43,7 @@ export function PhoneMockup({ t }: { t: Dictionary["appSection"]["mock"] }) {
                 </div>
                 <span className="text-[10px] font-medium text-accent">{t.inDays}</span>
               </div>
-              <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-white/10">
+              <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-fg/10">
                 <div className="h-full w-[72%] rounded-full bg-accent" />
               </div>
             </div>

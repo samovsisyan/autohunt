@@ -2,15 +2,16 @@ import { AdminHeader } from "@/components/admin/ui";
 import { ImportEditor } from "@/components/admin/import-editor";
 import { importEditorLookups } from "@/server/actions/admin/lookups";
 import { db } from "@/server/db";
+import { adminTitle, getAdminT } from "@/i18n/admin";
 
-export const metadata = { title: "Create import" };
+export const generateMetadata = adminTitle((t) => t.imports.create);
 
 export default async function NewImportPage({ searchParams }: { searchParams: Promise<{ customer?: string }> }) {
-  const [lookups, count, { customer }] = await Promise.all([importEditorLookups(), db.import.count(), searchParams]);
+  const [lookups, count, { customer }, { t }] = await Promise.all([importEditorLookups(), db.import.count(), searchParams, getAdminT()]);
   const year = new Date().getFullYear();
   return (
     <>
-      <AdminHeader title="Create import" back={{ href: "/admin/imports", label: "Imports" }} />
+      <AdminHeader title={t.imports.create} back={{ href: "/admin/imports", label: t.imports.title }} />
       <ImportEditor
         {...lookups}
         initial={{

@@ -8,20 +8,31 @@ import { buttonClasses } from "@/components/ui/button";
 import type { EstimateResult } from "@/server/calculator/engine";
 import { lineColors } from "@/components/calculator/cost-breakdown";
 import heroImg from "../../../public/images/site/hero.jpg";
+import heroLightImg from "../../../public/images/site/porsche-911.jpg";
 
 export function Hero({ locale, t, sample }: { locale: Locale; t: Dictionary; sample: EstimateResult | null }) {
   const h = t.hero;
   return (
     <section className="relative isolate flex min-h-[100svh] items-end overflow-hidden pt-28 pb-14 sm:pb-20 lg:items-center lg:pb-24">
       <div className="absolute inset-0 -z-20 lg:top-[10%] lg:left-[24%] lg:-right-[4%]">
+        {/* One photo per theme, swapped in CSS so the right one shows before hydration. */}
         <Image
           src={heroImg}
           alt=""
-          priority
+          loading="eager"
           fill
           placeholder="blur"
           sizes="(min-width: 1024px) 80vw, 100vw"
-          className="object-cover object-[68%_60%] brightness-[1.3] contrast-[1.08] lg:object-[50%_58%]"
+          className="object-cover object-[68%_60%] brightness-[1.3] contrast-[1.08] light:hidden lg:object-[50%_58%]"
+        />
+        <Image
+          src={heroLightImg}
+          alt=""
+          loading="eager"
+          fill
+          placeholder="blur"
+          sizes="(min-width: 1024px) 80vw, 100vw"
+          className="hidden object-cover object-[60%_75%] [mask-image:linear-gradient(to_right,transparent,black_30%)] light:block lg:object-[55%_78%]"
         />
       </div>
       <div className="absolute inset-x-0 bottom-0 -z-10 h-56 bg-gradient-to-t from-bg via-bg/60 to-transparent" />
@@ -30,7 +41,7 @@ export function Hero({ locale, t, sample }: { locale: Locale; t: Dictionary; sam
 
       <div className="container-page grid items-end gap-12 lg:grid-cols-[1.25fr_1fr] lg:items-start">
         <div className="max-w-2xl">
-          <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-line-strong bg-black/30 px-3.5 py-1.5 text-xs text-muted backdrop-blur-md">
+          <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-line-strong bg-bg/30 px-3.5 py-1.5 text-xs text-muted backdrop-blur-md">
             <span className="size-1.5 animate-pulse-ring rounded-full bg-accent" />
             {h.eyebrow}
           </p>
@@ -75,15 +86,15 @@ export function Hero({ locale, t, sample }: { locale: Locale; t: Dictionary; sam
 function HeroPriceCard({ locale, t, sample }: { locale: Locale; t: Dictionary; sample: EstimateResult }) {
   const usd = (n: number) => formatUsd(n, locale);
   return (
-    <div className="glass ml-auto max-w-sm rounded-3xl p-6 shadow-2xl lg:mt-4">
+    <div className="glass ml-auto max-w-sm rounded-3xl p-6 shadow-2xl light:bg-surface/90 lg:mt-4">
       <div className="flex items-center justify-between text-xs text-subtle">
         <span>2022 Toyota Camry Hybrid · Copart</span>
-        <span className="rounded-full bg-white/5 px-2 py-0.5">{t.common.estimated}</span>
+        <span className="rounded-full bg-fg/5 px-2 py-0.5">{t.common.estimated}</span>
       </div>
       <div className="mt-5 flex items-end justify-between">
         <div>
           <p className="text-xs text-muted">{t.hero.priceCardLabel}</p>
-          <p className="tabular mt-1 font-display text-2xl font-semibold text-muted line-through decoration-white/20">
+          <p className="tabular mt-1 font-display text-2xl font-semibold text-muted line-through decoration-fg/20">
             {usd(sample.input.price)}
           </p>
         </div>
@@ -93,7 +104,7 @@ function HeroPriceCard({ locale, t, sample }: { locale: Locale; t: Dictionary; s
           <p className="tabular mt-1 font-display text-3xl font-semibold text-positive">{usd(sample.total)}</p>
         </div>
       </div>
-      <div className="mt-5 flex h-2 overflow-hidden rounded-full bg-white/5">
+      <div className="mt-5 flex h-2 overflow-hidden rounded-full bg-fg/5">
         {sample.lines.map((l) => (
           <span key={l.key} style={{ width: `${(l.amount / sample.total) * 100}%`, background: lineColors[l.key] }} />
         ))}

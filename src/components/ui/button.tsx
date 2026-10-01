@@ -4,11 +4,11 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const variants = {
-  primary: "bg-fg text-bg hover:bg-white shadow-[0_8px_24px_-12px_rgb(255_255_255/0.5)]",
-  accent: "bg-accent text-[#04161c] hover:bg-[#7fe0f8] shadow-[0_10px_30px_-12px_rgb(95_212_244/0.7)]",
-  secondary: "glass text-fg hover:bg-white/10",
-  outline: "border border-line-strong text-fg hover:bg-white/5 hover:border-white/25",
-  ghost: "text-muted hover:text-fg hover:bg-white/5",
+  primary: "bg-fg text-bg hover:bg-fg/90 shadow-[0_8px_24px_-12px_color-mix(in_oklab,var(--color-fg)_50%,transparent)]",
+  accent: "bg-accent text-[#04161c] hover:brightness-110 shadow-[0_10px_30px_-12px_color-mix(in_oklab,var(--color-accent)_70%,transparent)]",
+  secondary: "glass text-fg hover:bg-fg/10",
+  outline: "border border-line-strong text-fg hover:bg-fg/5 hover:border-fg/25",
+  ghost: "text-muted hover:text-fg hover:bg-fg/5",
   danger: "bg-danger-soft text-danger border border-danger/30 hover:bg-danger/20",
 } as const;
 

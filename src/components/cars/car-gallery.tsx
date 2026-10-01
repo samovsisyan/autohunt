@@ -95,7 +95,7 @@ export function CarGallery({ images, title, photosLabel }: { images: { url: stri
 
       {lightbox &&
         createPortal(
-          <div className="fixed inset-0 z-[90] flex animate-fade-in items-center justify-center bg-black/95" role="dialog" aria-modal="true" aria-label={title}>
+          <div className="fixed inset-0 z-[90] flex animate-fade-in items-center justify-center bg-black/95" data-theme="dark" role="dialog" aria-modal="true" aria-label={title}>
             <button onClick={() => setLightbox(false)} className="absolute top-4 right-4 z-10 grid size-11 place-items-center rounded-full bg-white/10 hover:bg-white/20" aria-label="Close">
               <X className="size-5" />
             </button>

@@ -15,6 +15,11 @@ const en = {
       description:
         "Browse cars available now from AutoHunt in Gyumri and Yerevan. Filter by brand, price, fuel and more, and see the full cost upfront.",
     },
+    rent: {
+      title: "Car Rental in Armenia",
+      description:
+        "Rent a car from AutoHunt in Gyumri and Yerevan. Daily prices, transparent deposit, quick booking — choose a car and send a request in a minute.",
+    },
     import: {
       title: "Import a Car from the USA to Armenia",
       description:
@@ -68,6 +73,9 @@ const en = {
     saved: "Saved",
     compare: "Compare",
     home: "Home",
+    rent: "Rent a Car",
+    lightTheme: "Light theme",
+    darkTheme: "Dark theme",
   },
   common: {
     viewAll: "View all",
@@ -402,6 +410,53 @@ const en = {
     privacy: "Privacy",
     terms: "Terms",
   },
+  rent: {
+    eyebrow: "Car rental",
+    title: "Rent a car in Armenia",
+    subtitle: "Well-kept cars for a day, a week or a month. Pick a car, choose your dates and we'll confirm the booking by phone.",
+    perDay: "/ day",
+    from: "from",
+    deposit: "Deposit",
+    minDays: "Minimum rental",
+    days: "{count} days",
+    oneDay: "1 day",
+    available: "Available",
+    rented: "Rented now",
+    book: "Book this car",
+    details: "View & book",
+    emptyTitle: "No rental cars right now",
+    emptyText: "All our cars are booked at the moment. Leave a request and we'll call you as soon as one is free.",
+    emptyCta: "Contact us",
+    stepsTitle: "How renting works",
+    steps: [
+      { title: "Choose a car", text: "Browse the cars available for rent and pick the one that fits your trip." },
+      { title: "Send a request", text: "Select your pick-up and return dates. We confirm availability and price by phone." },
+      { title: "Pick up and drive", text: "Bring your driver's license and ID, leave the deposit and the keys are yours." },
+    ],
+    termsTitle: "What you need",
+    terms: [
+      "Valid driver's license",
+      "Passport or ID card",
+      "Refundable security deposit",
+      "Booking confirmed by our manager",
+    ],
+    homeTitle: "Need a car for a few days?",
+    homeSubtitle: "Rent from our own fleet in Gyumri and Yerevan — daily prices, no hidden fees.",
+    viewAll: "All rental cars",
+    booking: {
+      title: "Book this car",
+      text: "Choose your dates and leave your phone number. We'll confirm availability and the final price.",
+      pickup: "Pick-up date",
+      return: "Return date",
+      total: "Estimated total",
+      totalFor: "for {days}",
+      totalNote: "The final price is confirmed by our manager.",
+      invalidDates: "The return date must be after the pick-up date.",
+      minDaysError: "The minimum rental is {count} days.",
+      submit: "Request booking",
+      rentedNote: "This car is rented right now — send a request for later dates.",
+    },
+  },
   forms: {
     name: "Full name",
     phone: "Phone",
@@ -528,6 +583,7 @@ const en = {
       CORPORATE: "Corporate",
       CONTACT: "Contact",
       FINANCING: "Financing",
+      RENTAL: "Car rental",
     },
     requestStatus: { NEW: "New", IN_PROGRESS: "In progress", QUOTED: "Quoted", CLOSED: "Closed" },
     docType: {

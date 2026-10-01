@@ -56,7 +56,7 @@ export function Modal({
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           {title && <h2 className="font-display text-xl font-semibold">{title}</h2>}
-          <button onClick={onClose} className="-m-2 ml-auto rounded-lg p-2 text-muted hover:bg-white/5 hover:text-fg" aria-label={closeLabel}>
+          <button onClick={onClose} className="-m-2 ml-auto rounded-lg p-2 text-muted hover:bg-fg/5 hover:text-fg" aria-label={closeLabel}>
             <X className="size-5" />
           </button>
         </div>
@@ -103,7 +103,7 @@ export function Drawer({
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <h2 className="font-display text-lg font-semibold">{title}</h2>
-          <button onClick={onClose} className="-m-2 rounded-lg p-2 text-muted hover:bg-white/5 hover:text-fg" aria-label={closeLabel}>
+          <button onClick={onClose} className="-m-2 rounded-lg p-2 text-muted hover:bg-fg/5 hover:text-fg" aria-label={closeLabel}>
             <X className="size-5" />
           </button>
         </div>

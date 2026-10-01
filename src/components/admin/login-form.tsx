@@ -3,8 +3,10 @@
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
+import { useAdminT } from "./i18n";
 
 export function AdminLoginForm() {
+  const { t } = useAdminT();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   async function submit(e: FormEvent<HTMLFormElement>) {
@@ -22,20 +24,20 @@ export function AdminLoginForm() {
       return;
     }
     if (res?.ok) await fetch("/api/auth/logout", { method: "POST" });
-    setError(res?.ok ? "This account has no admin access." : "Invalid email or password.");
+    setError(res?.ok ? t.login.noAccess : t.login.invalid);
     setLoading(false);
   }
   return (
     <form onSubmit={submit} className="mt-8 space-y-4">
-      <Field label="Email" htmlFor="email">
+      <Field label={t.login.email} htmlFor="email">
         <Input id="email" name="email" type="email" required autoComplete="username" />
       </Field>
-      <Field label="Password" htmlFor="password">
+      <Field label={t.login.password} htmlFor="password">
         <Input id="password" name="password" type="password" required autoComplete="current-password" />
       </Field>
       {error && <p className="text-sm text-danger">{error}</p>}
       <Button type="submit" className="w-full" size="lg" loading={loading}>
-        Sign in
+        {t.login.submit}
       </Button>
     </form>
   );

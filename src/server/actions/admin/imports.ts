@@ -2,7 +2,7 @@
 
 import { db } from "@/server/db";
 import { importAdminSchema, type ImportAdminInput } from "@/server/validation/admin";
-import { adminAction } from "./_utils";
+import { AdminError, adminAction } from "./_utils";
 import { importStages } from "@/server/services/dashboard.service";
 
 const stageLabel = (s: string) => s.replace("_", " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
@@ -72,7 +72,7 @@ export async function addImportDocumentAction(importId: string, doc: { title: st
   return adminAction(async () => {
     const imp = await db.import.findUniqueOrThrow({ where: { id: importId }, select: { customerId: true, vehicleTitle: true } });
     const type = (["INVOICE", "BILL_OF_SALE", "TITLE", "BILL_OF_LADING", "CUSTOMS", "REGISTRATION", "INSPECTION", "VEHICLE_HISTORY", "AUCTION_SHEET", "OTHER"] as const).find((t) => t === doc.type) ?? "OTHER";
-    if (!doc.title.trim() || !doc.url.trim()) throw new Error("Title and file are required");
+    if (!doc.title.trim() || !doc.url.trim()) throw new AdminError("docRequired");
     await db.document.create({ data: { userId: imp.customerId, importId, title: doc.title.trim().slice(0, 160), url: doc.url, type } });
     await db.notification.create({
       data: { userId: imp.customerId, title: "New document", body: `${doc.title} is available for ${imp.vehicleTitle}.`, link: "/dashboard/documents" },

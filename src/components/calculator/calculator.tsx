@@ -253,7 +253,7 @@ export function Calculator({ locale, options, initialInput, initialResult, t, fu
 
             <CostBreakdown lines={result.lines} total={result.total} t={t} format={usd} className="mt-7" compact={embedded} />
 
-            <p className="mt-5 flex gap-2.5 rounded-2xl border border-line bg-white/[0.02] p-3.5 text-xs leading-relaxed text-muted">
+            <p className="mt-5 flex gap-2.5 rounded-2xl border border-line bg-fg/[0.02] p-3.5 text-xs leading-relaxed text-muted">
               <Info className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
               {t.disclaimer}
             </p>
@@ -287,7 +287,7 @@ export function Calculator({ locale, options, initialInput, initialResult, t, fu
             )}
           </>
         ) : (
-          <div className="mt-6 h-72 animate-pulse rounded-2xl bg-white/[0.03]" />
+          <div className="mt-6 h-72 animate-pulse rounded-2xl bg-fg/[0.03]" />
         )}
       </div>
 
@@ -306,7 +306,7 @@ export function Calculator({ locale, options, initialInput, initialResult, t, fu
 
       <Modal open={requestOpen} onClose={() => setRequestOpen(false)} title={t.request}>
         {result && (
-          <div className="mb-5 flex items-center justify-between rounded-2xl border border-line bg-white/[0.03] px-4 py-3 text-sm">
+          <div className="mb-5 flex items-center justify-between rounded-2xl border border-line bg-fg/[0.03] px-4 py-3 text-sm">
             <span className="text-muted">
               {input.year} · {fuelLabels[input.fuel]} · {usd(input.price)}
             </span>

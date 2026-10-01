@@ -71,7 +71,7 @@ export default async function ImportDetailPage({ params }: PageProps<"/[locale]/
             <section className="rounded-3xl border border-line bg-surface p-6 sm:p-8">
               <div className="mb-6 flex items-center justify-between gap-3">
                 <h2 className="font-display text-xl font-semibold">{t.calculator.breakdownTitle}</h2>
-                <span className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-subtle">{imp.finalTotal ? t.common.final : t.common.estimated}</span>
+                <span className="rounded-full bg-fg/5 px-2.5 py-1 text-xs text-subtle">{imp.finalTotal ? t.common.final : t.common.estimated}</span>
               </div>
               <CostBreakdown lines={breakdown.lines} total={breakdown.total} t={t.calculator} format={(n) => formatUsd(n, locale)} />
               {imp.finalTotal && (

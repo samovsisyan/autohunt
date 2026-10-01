@@ -30,12 +30,12 @@ export function FavoriteButton({
       className={cn(
         "inline-flex items-center justify-center gap-2 rounded-full transition-all active:scale-90",
         withText
-          ? "h-11 border border-line-strong px-4 text-sm hover:bg-white/5"
+          ? "h-11 border border-line-strong px-4 text-sm hover:bg-fg/5"
           : "size-9 bg-black/45 backdrop-blur-md hover:bg-black/65",
         className,
       )}
     >
-      <Heart className={cn("size-4 transition-colors", active ? "fill-danger text-danger" : "text-fg")} />
+      <Heart className={cn("size-4 transition-colors", active ? "fill-danger text-danger" : withText ? "text-fg" : "text-white")} />
       {withText && (active ? labels.saved : labels.save)}
     </button>
   );

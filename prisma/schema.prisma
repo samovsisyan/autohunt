@@ -25,6 +25,12 @@ enum Locale {
   en
 }
 
+/// SALE cars live in /cars; RENT cars live in /rent and their `price` is the daily rate.
+enum ListingType {
+  SALE
+  RENT
+}
+
 enum CarStatus {
   AVAILABLE
   RESERVED
@@ -96,6 +102,7 @@ enum RequestType {
   CORPORATE
   CONTACT
   FINANCING
+  RENTAL
 }
 
 enum RequestStatus {
@@ -185,7 +192,10 @@ model Car {
   color        String?
   interior     String?
   vin          String?
-  price        Int // USD
+  listingType  ListingType      @default(SALE)
+  price        Int // USD; per day when listingType = RENT
+  rentDeposit  Int? // USD security deposit (RENT only)
+  rentMinDays  Int? // minimum rental period in days (RENT only)
   location     String
   source       String? // e.g. "Copart", "IAAI", "Local"
   status       CarStatus        @default(AVAILABLE)
@@ -203,6 +213,7 @@ model Car {
   imports      Import[]
 
   @@index([status, published])
+  @@index([listingType, published])
   @@index([brand, model])
   @@index([price])
 }

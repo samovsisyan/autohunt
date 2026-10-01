@@ -66,8 +66,11 @@ function isIn(values: string[]) {
   return (v: string) => values.includes(v);
 }
 
+/** Everything under /cars is for sale; rental cars are listed separately under /rent. */
+const FOR_SALE = { listingType: "SALE" } as const satisfies Prisma.CarWhereInput;
+
 function buildWhere(f: CarFilters): Prisma.CarWhereInput {
-  const and: Prisma.CarWhereInput[] = [{ published: true }, { status: { not: "SOLD" } }];
+  const and: Prisma.CarWhereInput[] = [FOR_SALE, { published: true }, { status: { not: "SOLD" } }];
   if (f.q) {
     for (const term of f.q.split(/\s+/).slice(0, 4)) {
       and.push({
@@ -119,6 +122,9 @@ export const carCardSelect = {
   location: true,
   status: true,
   source: true,
+  listingType: true,
+  rentDeposit: true,
+  rentMinDays: true,
   images: { orderBy: { sortOrder: "asc" }, take: 1, select: { url: true, alt: true } },
 } satisfies Prisma.CarSelect;
 
@@ -142,7 +148,7 @@ export async function searchCars(f: CarFilters) {
 
 /** Distinct values for filter UIs, computed from the live inventory. */
 export async function getCarFacets() {
-  const where: Prisma.CarWhereInput = { published: true, status: { not: "SOLD" } };
+  const where: Prisma.CarWhereInput = { ...FOR_SALE, published: true, status: { not: "SOLD" } };
   const [brands, models, locations, agg] = await Promise.all([
     db.car.groupBy({ by: ["brand"], where, _count: true, orderBy: { brand: "asc" } }),
     db.car.groupBy({ by: ["brand", "model"], where, orderBy: { model: "asc" } }),
@@ -164,7 +170,7 @@ export type CarFacets = Awaited<ReturnType<typeof getCarFacets>>;
 
 export async function getFeaturedCars(take = 6) {
   return db.car.findMany({
-    where: { published: true, status: { in: ["AVAILABLE", "RESERVED"] } },
+    where: { ...FOR_SALE, published: true, status: { in: ["AVAILABLE", "RESERVED"] } },
     orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
     take,
     select: carCardSelect,
@@ -173,7 +179,7 @@ export async function getFeaturedCars(take = 6) {
 
 export async function getLatestCars(take = 4) {
   return db.car.findMany({
-    where: { published: true, status: { not: "SOLD" } },
+    where: { ...FOR_SALE, published: true, status: { not: "SOLD" } },
     orderBy: { createdAt: "desc" },
     take,
     select: carCardSelect,
@@ -183,7 +189,7 @@ export async function getLatestCars(take = 4) {
 export async function getCarsByIds(ids: string[]) {
   if (!ids.length) return [];
   const cars = await db.car.findMany({
-    where: { id: { in: ids.slice(0, 24) }, published: true },
+    where: { id: { in: ids.slice(0, 24) }, ...FOR_SALE, published: true },
     select: { ...carCardSelect, horsepower: true, color: true, features: true },
   });
   return ids.map((id) => cars.find((c) => c.id === id)).filter((c): c is NonNullable<typeof c> => !!c);
@@ -209,6 +215,7 @@ export async function getSimilarCars(car: { id: string; bodyType: BodyType; pric
   return db.car.findMany({
     where: {
       id: { not: car.id },
+      ...FOR_SALE,
       published: true,
       status: { not: "SOLD" },
       OR: [{ bodyType: car.bodyType }, { price: { gte: Math.round(car.price * 0.7), lte: Math.round(car.price * 1.3) } }],
@@ -219,6 +226,24 @@ export async function getSimilarCars(car: { id: string; bodyType: BodyType; pric
   });
 }
 
-export async function getAllCarSlugs() {
-  return db.car.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } });
+export async function getAllCarSlugs(listingType: "SALE" | "RENT" = "SALE") {
+  return db.car.findMany({ where: { listingType, published: true }, select: { slug: true, updatedAt: true } });
+}
+
+// ───────────── Rentals ─────────────
+
+/** Published rental cars: available first, then the rest (currently rented). */
+export async function getRentalCars(take?: number) {
+  const cars = await db.car.findMany({
+    where: { listingType: "RENT", published: true, status: { not: "SOLD" } },
+    orderBy: [{ featured: "desc" }, { price: "asc" }],
+    take,
+    select: carCardSelect,
+  });
+  return cars.sort((a, b) => Number(b.status === "AVAILABLE") - Number(a.status === "AVAILABLE"));
+}
+
+export async function getRentalCarBySlug(slug: string, locale: Locale) {
+  const car = await getCarBySlug(slug, locale);
+  return car?.listingType === "RENT" ? car : null;
 }

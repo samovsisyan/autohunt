@@ -4,14 +4,17 @@ import type { Prisma } from "@/generated/prisma/client";
 import { AdminHeader } from "@/components/admin/ui";
 import { RequestRow } from "@/components/admin/request-row";
 import { cn } from "@/lib/cn";
+import { adminTitle, getAdminT } from "@/i18n/admin";
 
-export const metadata = { title: "Requests" };
+export const generateMetadata = adminTitle((t) => t.requests.title);
 
-const TYPES = ["ALL", "CAR_REQUEST", "IMPORT", "CAR_SEARCH", "CORPORATE", "FINANCING", "CONTACT"];
+const TYPES = ["ALL", "CAR_REQUEST", "RENTAL", "IMPORT", "CAR_SEARCH", "CORPORATE", "FINANCING", "CONTACT"];
 const STATUSES = ["ALL", "NEW", "IN_PROGRESS", "QUOTED", "CLOSED"];
 
 export default async function AdminRequestsPage({ searchParams }: { searchParams: Promise<{ type?: string; status?: string }> }) {
   const { type = "ALL", status = "ALL" } = await searchParams;
+  const { t } = await getAdminT();
+  const labels: Record<string, string> = { ALL: t.common.all, ...t.enums.requestType, ...t.enums.requestStatus };
   const where: Prisma.RequestWhereInput = {
     ...(type !== "ALL" ? { type: type as Prisma.RequestWhereInput["type"] } : {}),
     ...(status !== "ALL" ? { status: status as Prisma.RequestWhereInput["status"] } : {}),
@@ -28,12 +31,12 @@ export default async function AdminRequestsPage({ searchParams }: { searchParams
       href={`/admin/requests?type=${key === "type" ? value : type}&status=${key === "status" ? value : status}`}
       className={cn("h-8 shrink-0 rounded-full border px-3 text-xs leading-8", value === current ? "border-accent/50 bg-accent-soft text-fg" : "border-line text-muted hover:text-fg")}
     >
-      {value.replace("_", " ").toLowerCase()}
+      {labels[value] ?? value}
     </Link>
   );
   return (
     <>
-      <AdminHeader title="Requests" description="Leads from car pages, import & search forms, corporate quotes and contact forms." />
+      <AdminHeader title={t.requests.title} description={t.requests.subtitle} />
       <div className="mb-3 no-scrollbar flex gap-1 overflow-x-auto">{TYPES.map((v) => chip("type", v, type))}</div>
       <div className="mb-6 no-scrollbar flex gap-1 overflow-x-auto">{STATUSES.map((v) => chip("status", v, status))}</div>
       <ul className="space-y-3">
@@ -57,7 +60,7 @@ export default async function AdminRequestsPage({ searchParams }: { searchParams
             }}
           />
         ))}
-        {!requests.length && <li className="rounded-2xl border border-dashed border-line-strong px-6 py-12 text-center text-sm text-muted">No requests.</li>}
+        {!requests.length && <li className="rounded-2xl border border-dashed border-line-strong px-6 py-12 text-center text-sm text-muted">{t.requests.empty}</li>}
       </ul>
     </>
   );

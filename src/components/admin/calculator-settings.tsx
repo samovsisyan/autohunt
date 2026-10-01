@@ -22,6 +22,8 @@ import { cn } from "@/lib/cn";
 import { Panel } from "./ui";
 import { useAdminAction } from "./hooks";
 import { ConfirmButton } from "./confirm-button";
+import { useAdminT } from "./i18n";
+import { fmt } from "@/i18n/format";
 
 type Names = { hy: string; ru: string; en: string };
 type Lookup = { id?: string; code: string; name: Names; active: boolean; sortOrder: number };
@@ -64,24 +66,17 @@ const nullable = (v: string) => (v === "" ? null : Number(v));
 const shown = (v: number | null) => (v === null ? "" : v);
 const cell = "h-9 px-2.5 text-sm";
 
-const TABS = [
-  { id: "rates", label: "Exchange rates" },
-  { id: "auctions", label: "Auction fees" },
-  { id: "shipping", label: "Shipping & transport" },
-  { id: "customs", label: "Customs rules" },
-  { id: "fees", label: "Documentation, registration & service" },
-  { id: "lookups", label: "Countries, destinations & vehicle types" },
-  { id: "test", label: "Test estimate" },
-] as const;
+const TABS = ["rates", "auctions", "shipping", "customs", "fees", "lookups", "test"] as const;
 
 export function CalculatorSettings({ data }: { data: CalculatorSettingsData }) {
-  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("rates");
+  const [tab, setTab] = useState<(typeof TABS)[number]>("rates");
+  const { t } = useAdminT();
   return (
     <div className="grid gap-6 lg:grid-cols-[230px_1fr]">
       <nav className="no-scrollbar flex gap-1 overflow-x-auto lg:sticky lg:top-8 lg:flex-col lg:self-start">
-        {TABS.map((t) => (
-          <button key={t.id} onClick={() => setTab(t.id)} className={cn("shrink-0 rounded-lg px-3 py-2 text-left text-sm transition-colors", tab === t.id ? "bg-white/[0.07] text-fg" : "text-muted hover:text-fg")}>
-            {t.label}
+        {TABS.map((id) => (
+          <button key={id} onClick={() => setTab(id)} className={cn("shrink-0 rounded-lg px-3 py-2 text-left text-sm transition-colors", tab === id ? "bg-fg/[0.07] text-fg" : "text-muted hover:text-fg")}>
+            {t.calculator.tabs[id]}
           </button>
         ))}
       </nav>
@@ -93,9 +88,9 @@ export function CalculatorSettings({ data }: { data: CalculatorSettingsData }) {
         {tab === "fees" && <FeesSection fees={data.fees} />}
         {tab === "lookups" && (
           <>
-            <LookupSection kind="origin" title="Origin countries" items={data.origins} />
-            <LookupSection kind="destination" title="Destinations in Armenia" items={data.destinations} />
-            <LookupSection kind="vehicleType" title="Vehicle types (shipping classes)" items={data.vehicleTypes} withActive={false} />
+            <LookupSection kind="origin" title={t.calculator.lookups.origins} items={data.origins} />
+            <LookupSection kind="destination" title={t.calculator.lookups.destinations} items={data.destinations} />
+            <LookupSection kind="vehicleType" title={t.calculator.lookups.vehicleTypes} items={data.vehicleTypes} withActive={false} />
           </>
         )}
         {tab === "test" && <TestSection data={data} />}
@@ -105,11 +100,12 @@ export function CalculatorSettings({ data }: { data: CalculatorSettingsData }) {
 }
 
 function SaveBar({ onSave, pending, children }: { onSave: () => void; pending: boolean; children?: ReactNode }) {
+  const { t } = useAdminT();
   return (
     <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
       <div className="flex gap-2">{children}</div>
       <Button onClick={onSave} loading={pending} size="sm">
-        <Save className="size-4" /> Save changes
+        <Save className="size-4" /> {t.common.saveChanges}
       </Button>
     </div>
   );
@@ -119,15 +115,16 @@ function RatesSection({ data }: { data: CalculatorSettingsData }) {
   const [rates, setRates] = useState(data.rates);
   const [settings, setSettings] = useState(data.settings);
   const { run, pending } = useAdminAction();
+  const x = useAdminT().t.calculator.rates;
   return (
-    <Panel title="Exchange rates & general" description="Units of currency per 1 USD. EUR is used for per-cc customs duty; AMD for the dram equivalent.">
+    <Panel title={x.title} description={x.hint}>
       <div className="space-y-2">
         {rates.map((r, i) => (
           <div key={i} className="flex items-center gap-2">
             <Input className={cn(cell, "w-24 uppercase")} value={r.code} maxLength={3} onChange={(e) => setRates(rates.map((x, j) => (j === i ? { ...x, code: e.target.value.toUpperCase() } : x)))} />
-            <span className="text-sm text-subtle">per $1 =</span>
+            <span className="text-sm text-subtle">{x.perUsd}</span>
             <Input className={cn(cell, "w-40")} type="number" step="0.0001" value={r.perUsd} onChange={(e) => setRates(rates.map((x, j) => (j === i ? { ...x, perUsd: Number(e.target.value) } : x)))} />
-            <Button variant="ghost" size="sm" onClick={() => setRates(rates.filter((_, j) => j !== i))} aria-label="Remove rate">
+            <Button variant="ghost" size="sm" onClick={() => setRates(rates.filter((_, j) => j !== i))} aria-label={x.remove}>
               <Trash2 className="size-4" />
             </Button>
           </div>
@@ -136,20 +133,20 @@ function RatesSection({ data }: { data: CalculatorSettingsData }) {
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <label className="flex items-center justify-between gap-3 rounded-xl border border-line px-4 py-3 text-sm">
           <span>
-            Customs value includes US transport & ocean shipping
-            <span className="block text-xs text-subtle">CIF-style base (recommended)</span>
+            {x.cif}
+            <span className="block text-xs text-subtle">{x.cifHint}</span>
           </span>
           <input type="checkbox" checked={settings.customsBaseIncludesShipping} onChange={(e) => setSettings({ ...settings, customsBaseIncludesShipping: e.target.checked })} className="accent-[var(--color-accent)]" />
         </label>
         <label className="rounded-xl border border-line px-4 py-3 text-sm">
-          Reference year for vehicle age
-          <span className="block text-xs text-subtle">Empty = current year</span>
+          {x.refYear}
+          <span className="block text-xs text-subtle">{x.refYearHint}</span>
           <Input className={cn(cell, "mt-2")} type="number" value={shown(settings.referenceYear)} onChange={(e) => setSettings({ ...settings, referenceYear: nullable(e.target.value) })} />
         </label>
       </div>
-      <SaveBar pending={pending} onSave={() => run(() => saveRatesAction({ rates, ...settings }), { success: "Rates saved" })}>
+      <SaveBar pending={pending} onSave={() => run(() => saveRatesAction({ rates, ...settings }), { success: x.savedToast })}>
         <Button variant="outline" size="sm" onClick={() => setRates([...rates, { code: "", perUsd: 1 }])}>
-          <Plus className="size-4" /> Add currency
+          <Plus className="size-4" /> {x.addCurrency}
         </Button>
       </SaveBar>
     </Panel>
@@ -159,20 +156,22 @@ function RatesSection({ data }: { data: CalculatorSettingsData }) {
 function AuctionsSection({ auctions: initial }: { auctions: Auction[] }) {
   const [auctions, setAuctions] = useState(initial);
   const { run, pending } = useAdminAction();
+  const { t } = useAdminT();
+  const x = t.calculator.auctions;
   const update = (i: number, patch: Partial<Auction>) => setAuctions(auctions.map((a, j) => (j === i ? { ...a, ...patch } : a)));
   return (
     <>
       {auctions.map((a, i) => (
         <Panel
           key={a.id ?? `new-${i}`}
-          title={a.name || "New auction"}
-          description="Buyer fee = fixed + price × percent, using the tier the bid falls into. Include gate, online-bid and environmental fees in “fixed”."
+          title={a.name || x.newAuction}
+          description={x.hint}
           actions={
             <div className="flex items-center gap-2">
-              <Input className={cn(cell, "w-28 uppercase")} placeholder="CODE" value={a.code} onChange={(e) => update(i, { code: e.target.value.toUpperCase() })} />
-              <Input className={cn(cell, "w-36")} placeholder="Display name" value={a.name} onChange={(e) => update(i, { name: e.target.value })} />
+              <Input className={cn(cell, "w-28 uppercase")} placeholder={x.code} value={a.code} onChange={(e) => update(i, { code: e.target.value.toUpperCase() })} />
+              <Input className={cn(cell, "w-36")} placeholder={x.displayName} value={a.name} onChange={(e) => update(i, { name: e.target.value })} />
               <label className="flex items-center gap-1.5 text-xs text-muted">
-                <input type="checkbox" checked={a.active} onChange={(e) => update(i, { active: e.target.checked })} className="accent-[var(--color-accent)]" /> active
+                <input type="checkbox" checked={a.active} onChange={(e) => update(i, { active: e.target.checked })} className="accent-[var(--color-accent)]" /> {t.common.active}
               </label>
             </div>
           }
@@ -181,10 +180,10 @@ function AuctionsSection({ auctions: initial }: { auctions: Auction[] }) {
             <table className="w-full min-w-[560px] text-sm">
               <thead className="text-left text-xs text-subtle">
                 <tr>
-                  <th className="pb-2 font-normal">Min price $</th>
-                  <th className="pb-2 font-normal">Max price $ (empty = ∞)</th>
-                  <th className="pb-2 font-normal">Fixed fee $</th>
-                  <th className="pb-2 font-normal">Percent %</th>
+                  <th className="pb-2 font-normal">{x.minPrice}</th>
+                  <th className="pb-2 font-normal">{x.maxPrice}</th>
+                  <th className="pb-2 font-normal">{x.fixedFee}</th>
+                  <th className="pb-2 font-normal">{x.percent}</th>
                   <th />
                 </tr>
               </thead>
@@ -203,7 +202,7 @@ function AuctionsSection({ auctions: initial }: { auctions: Auction[] }) {
                       </td>
                     ))}
                     <td>
-                      <Button variant="ghost" size="sm" onClick={() => update(i, { tiers: a.tiers.filter((_, m) => m !== k) })} aria-label="Remove tier">
+                      <Button variant="ghost" size="sm" onClick={() => update(i, { tiers: a.tiers.filter((_, m) => m !== k) })} aria-label={x.removeTier}>
                         <Trash2 className="size-4" />
                       </Button>
                     </td>
@@ -212,12 +211,12 @@ function AuctionsSection({ auctions: initial }: { auctions: Auction[] }) {
               </tbody>
             </table>
           </div>
-          <SaveBar pending={pending} onSave={() => run(() => saveAuctionAction(a), { success: `${a.name} saved` })}>
+          <SaveBar pending={pending} onSave={() => run(() => saveAuctionAction(a), { success: fmt(x.savedToast, { name: a.name }) })}>
             <Button variant="outline" size="sm" onClick={() => update(i, { tiers: [...a.tiers, { minPrice: (a.tiers.at(-1)?.maxPrice ?? 0) + 1, maxPrice: null, fixedFee: 0, percentFee: 0 }] })}>
-              <Plus className="size-4" /> Add tier
+              <Plus className="size-4" /> {x.addTier}
             </Button>
             {a.id && (
-              <ConfirmButton title={`Delete ${a.name}?`} message="The auction and its fee tiers will be removed." onConfirm={() => run(() => deleteAuctionAction(a.id!), { success: "Deleted" })}>
+              <ConfirmButton title={fmt(x.deleteTitle, { name: a.name })} message={x.deleteMessage} onConfirm={() => run(() => deleteAuctionAction(a.id!), { success: t.common.deleted })}>
                 <Trash2 className="size-4 text-danger" />
               </ConfirmButton>
             )}
@@ -225,7 +224,7 @@ function AuctionsSection({ auctions: initial }: { auctions: Auction[] }) {
         </Panel>
       ))}
       <Button variant="outline" onClick={() => setAuctions([...auctions, { code: "", name: "", active: true, sortOrder: auctions.length, tiers: [{ minPrice: 0, maxPrice: null, fixedFee: 0, percentFee: 0 }] }])}>
-        <Plus className="size-4" /> Add auction
+        <Plus className="size-4" /> {x.add}
       </Button>
     </>
   );
@@ -244,17 +243,22 @@ function ShippingSection({ data }: { data: CalculatorSettingsData }) {
   });
   const [origin, setOrigin] = useState(data.origins[0]?.id ?? "");
   const { run, pending } = useAdminAction();
-  const name = (list: Lookup[], id: string) => list.find((x) => x.id === id)?.name.en ?? "?";
+  const { t, locale } = useAdminT();
+  const x = t.calculator.shipping;
+  const name = (list: Lookup[], id: string) => {
+    const n = list.find((l) => l.id === id)?.name;
+    return n?.[locale] || n?.en || "?";
+  };
   const visible = rows.filter((r) => r.originId === origin);
   return (
     <Panel
-      title="Shipping & transport"
-      description="Per origin → destination → vehicle type. USA inland = auction yard → port. International shipping = ocean + land delivery from Poti."
+      title={x.title}
+      description={x.hint}
       actions={
         <div className="flex gap-1">
           {data.origins.map((o) => (
             <Chip key={o.id} active={o.id === origin} onClick={() => setOrigin(o.id!)} className="h-8">
-              {o.name.en}
+              {o.name[locale] || o.name.en}
             </Chip>
           ))}
         </div>
@@ -264,12 +268,12 @@ function ShippingSection({ data }: { data: CalculatorSettingsData }) {
         <table className="w-full min-w-[640px] text-sm">
           <thead className="text-left text-xs text-subtle">
             <tr>
-              <th className="pb-2 font-normal">Destination</th>
-              <th className="pb-2 font-normal">Vehicle type</th>
-              <th className="pb-2 font-normal">US inland $</th>
-              <th className="pb-2 font-normal">Ocean $</th>
-              <th className="pb-2 font-normal">Land delivery $</th>
-              <th className="pb-2 text-right font-normal">Total</th>
+              <th className="pb-2 font-normal">{x.destination}</th>
+              <th className="pb-2 font-normal">{x.vehicleType}</th>
+              <th className="pb-2 font-normal">{x.inland}</th>
+              <th className="pb-2 font-normal">{x.ocean}</th>
+              <th className="pb-2 font-normal">{x.land}</th>
+              <th className="pb-2 text-right font-normal">{x.total}</th>
             </tr>
           </thead>
           <tbody>
@@ -291,7 +295,7 @@ function ShippingSection({ data }: { data: CalculatorSettingsData }) {
           </tbody>
         </table>
       </div>
-      <SaveBar pending={pending} onSave={() => run(() => saveShippingRatesAction(rows), { success: "Shipping rates saved" })} />
+      <SaveBar pending={pending} onSave={() => run(() => saveShippingRatesAction(rows), { success: x.savedToast })} />
     </Panel>
   );
 }
@@ -299,6 +303,8 @@ function ShippingSection({ data }: { data: CalculatorSettingsData }) {
 function CustomsSection({ rules: initial }: { rules: Customs[] }) {
   const [rules, setRules] = useState(initial);
   const { run, pending } = useAdminAction();
+  const { t } = useAdminT();
+  const x = t.calculator.customs;
   const update = (i: number, patch: Partial<Customs>) => setRules(rules.map((r, j) => (j === i ? { ...r, ...patch } : r)));
   const numField = (i: number, r: Customs, f: keyof Customs, label: string, nullableField = false, step = "any") => (
     <label className="text-xs text-subtle">
@@ -309,7 +315,7 @@ function CustomsSection({ rules: initial }: { rules: Customs[] }) {
   return (
     <>
       <p className="rounded-2xl border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning">
-        Rules are evaluated by priority (lowest first); the first rule matching fuel, age and engine volume applies. Duty = max(customs value × duty %, engine cc × €/cc). VAT applies to value + duty + excise.
+        {x.hint}
       </p>
       {rules.map((r, i) => (
         <Panel
@@ -317,34 +323,34 @@ function CustomsSection({ rules: initial }: { rules: Customs[] }) {
           title={<Input className={cn(cell, "w-72 font-medium")} value={r.name} onChange={(e) => update(i, { name: e.target.value })} />}
           actions={
             <label className="flex items-center gap-1.5 text-xs text-muted">
-              <input type="checkbox" checked={r.active} onChange={(e) => update(i, { active: e.target.checked })} className="accent-[var(--color-accent)]" /> active
+              <input type="checkbox" checked={r.active} onChange={(e) => update(i, { active: e.target.checked })} className="accent-[var(--color-accent)]" /> {t.common.active}
             </label>
           }
         >
           <div className="mb-4 flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 text-xs text-subtle">Fuel (none = all):</span>
+            <span className="mr-1 text-xs text-subtle">{x.fuel}</span>
             {FUELS.map((f) => (
               <Chip key={f} active={r.fuelTypes.includes(f)} className="h-7 px-2.5 text-xs" onClick={() => update(i, { fuelTypes: r.fuelTypes.includes(f) ? r.fuelTypes.filter((x) => x !== f) : [...r.fuelTypes, f] })}>
-                {f.toLowerCase().replace("_", " ")}
+                {(t.enums.fuel as Record<string, string>)[f]}
               </Chip>
             ))}
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-            {numField(i, r, "priority", "Priority", false, "1")}
-            {numField(i, r, "minAge", "Min age (yrs)", false, "1")}
-            {numField(i, r, "maxAge", "Max age (∞ if empty)", true, "1")}
-            {numField(i, r, "minEngineCc", "Min engine cc", false, "1")}
-            {numField(i, r, "maxEngineCc", "Max engine cc", true, "1")}
-            {numField(i, r, "dutyPercent", "Duty %")}
-            {numField(i, r, "dutyPerCcEur", "Min duty €/cc")}
-            {numField(i, r, "exciseFixed", "Excise $")}
-            {numField(i, r, "vatPercent", "VAT %")}
-            {numField(i, r, "processingFee", "Clearance fee $")}
+            {numField(i, r, "priority", x.priority, false, "1")}
+            {numField(i, r, "minAge", x.minAge, false, "1")}
+            {numField(i, r, "maxAge", x.maxAge, true, "1")}
+            {numField(i, r, "minEngineCc", x.minCc, false, "1")}
+            {numField(i, r, "maxEngineCc", x.maxCc, true, "1")}
+            {numField(i, r, "dutyPercent", x.dutyPercent)}
+            {numField(i, r, "dutyPerCcEur", x.dutyPerCc)}
+            {numField(i, r, "exciseFixed", x.excise)}
+            {numField(i, r, "vatPercent", x.vat)}
+            {numField(i, r, "processingFee", x.clearance)}
           </div>
-          <Input className={cn(cell, "mt-3")} placeholder="Internal notes (source of the rate, validity…)" value={r.notes ?? ""} onChange={(e) => update(i, { notes: e.target.value })} />
-          <SaveBar pending={pending} onSave={() => run(() => saveCustomsRuleAction(r as Parameters<typeof saveCustomsRuleAction>[0]), { success: "Customs rule saved" })}>
+          <Input className={cn(cell, "mt-3")} placeholder={x.notes} value={r.notes ?? ""} onChange={(e) => update(i, { notes: e.target.value })} />
+          <SaveBar pending={pending} onSave={() => run(() => saveCustomsRuleAction(r as Parameters<typeof saveCustomsRuleAction>[0]), { success: x.savedToast })}>
             {r.id && (
-              <ConfirmButton title="Delete customs rule?" onConfirm={() => run(() => deleteCustomsRuleAction(r.id!), { success: "Deleted" })}>
+              <ConfirmButton title={x.deleteTitle} onConfirm={() => run(() => deleteCustomsRuleAction(r.id!), { success: t.common.deleted })}>
                 <Trash2 className="size-4 text-danger" />
               </ConfirmButton>
             )}
@@ -353,9 +359,9 @@ function CustomsSection({ rules: initial }: { rules: Customs[] }) {
       ))}
       <Button
         variant="outline"
-        onClick={() => setRules([...rules, { name: "New rule", fuelTypes: [], minAge: 0, maxAge: null, minEngineCc: 0, maxEngineCc: null, dutyPercent: 15, dutyPerCcEur: 0, exciseFixed: 0, vatPercent: 20, processingFee: 0, priority: (rules.at(-1)?.priority ?? 0) + 10, active: true, notes: null }])}
+        onClick={() => setRules([...rules, { name: x.newRule, fuelTypes: [], minAge: 0, maxAge: null, minEngineCc: 0, maxEngineCc: null, dutyPercent: 15, dutyPerCcEur: 0, exciseFixed: 0, vatPercent: 20, processingFee: 0, priority: (rules.at(-1)?.priority ?? 0) + 10, active: true, notes: null }])}
       >
-        <Plus className="size-4" /> Add customs rule
+        <Plus className="size-4" /> {x.add}
       </Button>
     </>
   );
@@ -364,62 +370,64 @@ function CustomsSection({ rules: initial }: { rules: Customs[] }) {
 function FeesSection({ fees: initial }: { fees: Fee[] }) {
   const [fees, setFees] = useState(initial);
   const { run, pending } = useAdminAction();
+  const { t, locale } = useAdminT();
+  const x = t.calculator.fees;
   const update = (i: number, patch: Partial<Fee>) => setFees(fees.map((f, j) => (j === i ? { ...f, ...patch } : f)));
   return (
     <>
       {fees.map((f, i) => (
         <Panel
           key={f.id ?? `new-${i}`}
-          title={f.name.en || f.key || "New fee"}
-          description={`Shown in the breakdown line “${f.category.toLowerCase()}”. Multiple fees in one category are summed.`}
+          title={f.name[locale] || f.name.en || f.key || x.newFee}
+          description={fmt(x.hint, { category: t.enums.feeCategory[f.category] })}
           actions={
             <label className="flex items-center gap-1.5 text-xs text-muted">
-              <input type="checkbox" checked={f.active} onChange={(e) => update(i, { active: e.target.checked })} className="accent-[var(--color-accent)]" /> active
+              <input type="checkbox" checked={f.active} onChange={(e) => update(i, { active: e.target.checked })} className="accent-[var(--color-accent)]" /> {t.common.active}
             </label>
           }
         >
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <label className="text-xs text-subtle">
-              Key
+              {x.key}
               <Input className={cn(cell, "mt-1")} value={f.key} onChange={(e) => update(i, { key: e.target.value.toLowerCase() })} />
             </label>
             <label className="text-xs text-subtle">
-              Category
-              <Select className={cn(cell, "mt-1")} value={f.category} onChange={(e) => update(i, { category: e.target.value as Fee["category"] })} options={["DOCUMENTATION", "REGISTRATION", "SERVICE"].map((v) => ({ value: v, label: v.toLowerCase() }))} />
+              {x.category}
+              <Select className={cn(cell, "mt-1")} value={f.category} onChange={(e) => update(i, { category: e.target.value as Fee["category"] })} options={(["DOCUMENTATION", "REGISTRATION", "SERVICE"] as const).map((v) => ({ value: v, label: t.enums.feeCategory[v] }))} />
             </label>
             <label className="text-xs text-subtle">
-              Type
-              <Select className={cn(cell, "mt-1")} value={f.type} onChange={(e) => update(i, { type: e.target.value as Fee["type"] })} options={[{ value: "FIXED", label: "fixed $" }, { value: "PERCENT", label: "percent %" }]} />
+              {x.type}
+              <Select className={cn(cell, "mt-1")} value={f.type} onChange={(e) => update(i, { type: e.target.value as Fee["type"] })} options={[{ value: "FIXED", label: x.fixed }, { value: "PERCENT", label: x.percent }]} />
             </label>
             <label className="text-xs text-subtle">
-              Percent of
-              <Select className={cn(cell, "mt-1")} disabled={f.type === "FIXED"} value={f.basis} onChange={(e) => update(i, { basis: e.target.value as Fee["basis"] })} options={[{ value: "CAR_PRICE", label: "car price" }, { value: "SUBTOTAL", label: "subtotal" }]} />
+              {x.percentOf}
+              <Select className={cn(cell, "mt-1")} disabled={f.type === "FIXED"} value={f.basis} onChange={(e) => update(i, { basis: e.target.value as Fee["basis"] })} options={[{ value: "CAR_PRICE", label: x.carPrice }, { value: "SUBTOTAL", label: x.subtotal }]} />
             </label>
             <label className="text-xs text-subtle">
-              Amount {f.type === "PERCENT" ? "%" : "$"}
+              {x.amount} {f.type === "PERCENT" ? "%" : "$"}
               <Input className={cn(cell, "mt-1")} type="number" step="any" value={f.amount} onChange={(e) => update(i, { amount: Number(e.target.value) })} />
             </label>
             <label className="text-xs text-subtle">
-              Minimum $
+              {x.minimum}
               <Input className={cn(cell, "mt-1")} type="number" value={shown(f.minAmount)} onChange={(e) => update(i, { minAmount: nullable(e.target.value) })} />
             </label>
             <label className="text-xs text-subtle">
-              Maximum $
+              {x.maximum}
               <Input className={cn(cell, "mt-1")} type="number" value={shown(f.maxAmount)} onChange={(e) => update(i, { maxAmount: nullable(e.target.value) })} />
             </label>
             <label className="text-xs text-subtle">
-              Order
+              {x.order}
               <Input className={cn(cell, "mt-1")} type="number" value={f.sortOrder} onChange={(e) => update(i, { sortOrder: Number(e.target.value) })} />
             </label>
           </div>
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
             {(["hy", "ru", "en"] as const).map((l) => (
-              <Input key={l} className={cell} placeholder={`Name (${l})`} value={f.name[l]} onChange={(e) => update(i, { name: { ...f.name, [l]: e.target.value } })} />
+              <Input key={l} className={cell} placeholder={fmt(x.name, { lang: l })} value={f.name[l]} onChange={(e) => update(i, { name: { ...f.name, [l]: e.target.value } })} />
             ))}
           </div>
-          <SaveBar pending={pending} onSave={() => run(() => saveFeeRuleAction(f), { success: "Fee saved" })}>
+          <SaveBar pending={pending} onSave={() => run(() => saveFeeRuleAction(f), { success: x.savedToast })}>
             {f.id && (
-              <ConfirmButton title="Delete fee?" onConfirm={() => run(() => deleteFeeRuleAction(f.id!), { success: "Deleted" })}>
+              <ConfirmButton title={x.deleteTitle} onConfirm={() => run(() => deleteFeeRuleAction(f.id!), { success: t.common.deleted })}>
                 <Trash2 className="size-4 text-danger" />
               </ConfirmButton>
             )}
@@ -427,7 +435,7 @@ function FeesSection({ fees: initial }: { fees: Fee[] }) {
         </Panel>
       ))}
       <Button variant="outline" onClick={() => setFees([...fees, { key: "", name: { hy: "", ru: "", en: "" }, category: "DOCUMENTATION", type: "FIXED", basis: "CAR_PRICE", amount: 0, minAmount: null, maxAmount: null, active: true, sortOrder: fees.length + 1 }])}>
-        <Plus className="size-4" /> Add fee
+        <Plus className="size-4" /> {x.add}
       </Button>
     </>
   );
@@ -436,24 +444,26 @@ function FeesSection({ fees: initial }: { fees: Fee[] }) {
 function LookupSection({ kind, title, items: initial, withActive = true }: { kind: "origin" | "destination" | "vehicleType"; title: string; items: Lookup[]; withActive?: boolean }) {
   const [items, setItems] = useState(initial);
   const { run, pending } = useAdminAction();
+  const { t } = useAdminT();
+  const x = t.calculator.lookups;
   const update = (i: number, patch: Partial<Lookup>) => setItems(items.map((x, j) => (j === i ? { ...x, ...patch } : x)));
   return (
-    <Panel title={title} description="After adding a new entry, fill in its shipping rates.">
+    <Panel title={title} description={x.hint}>
       <div className="space-y-2">
         {items.map((it, i) => (
           <div key={it.id ?? `n${i}`} className="grid items-center gap-2 sm:grid-cols-[110px_1fr_1fr_1fr_60px_auto]">
-            <Input className={cn(cell, "uppercase")} placeholder="CODE" value={it.code} onChange={(e) => update(i, { code: e.target.value.toUpperCase() })} />
+            <Input className={cn(cell, "uppercase")} placeholder={t.calculator.auctions.code} value={it.code} onChange={(e) => update(i, { code: e.target.value.toUpperCase() })} />
             {(["hy", "ru", "en"] as const).map((l) => (
               <Input key={l} className={cell} placeholder={l} value={it.name[l]} onChange={(e) => update(i, { name: { ...it.name, [l]: e.target.value } })} />
             ))}
-            <Input className={cell} type="number" title="Sort order" value={it.sortOrder} onChange={(e) => update(i, { sortOrder: Number(e.target.value) })} />
+            <Input className={cell} type="number" title={x.sortOrder} value={it.sortOrder} onChange={(e) => update(i, { sortOrder: Number(e.target.value) })} />
             <div className="flex items-center gap-1">
-              {withActive && <input type="checkbox" title="Active" checked={it.active} onChange={(e) => update(i, { active: e.target.checked })} className="mx-1 accent-[var(--color-accent)]" />}
-              <Button variant="ghost" size="sm" disabled={pending} onClick={() => run(() => saveLookupAction(kind, it), { success: "Saved" })} aria-label="Save">
+              {withActive && <input type="checkbox" title={t.common.active} checked={it.active} onChange={(e) => update(i, { active: e.target.checked })} className="mx-1 accent-[var(--color-accent)]" />}
+              <Button variant="ghost" size="sm" disabled={pending} onClick={() => run(() => saveLookupAction(kind, it), { success: t.common.saved })} aria-label={t.common.save}>
                 <Save className="size-4" />
               </Button>
               {it.id ? (
-                <ConfirmButton title="Delete entry?" message="Its shipping rates will be removed too." onConfirm={() => run(() => deleteLookupAction(kind, it.id!), { success: "Deleted" })}>
+                <ConfirmButton title={x.deleteTitle} message={x.deleteMessage} onConfirm={() => run(() => deleteLookupAction(kind, it.id!), { success: t.common.deleted })}>
                   <Trash2 className="size-4 text-danger" />
                 </ConfirmButton>
               ) : (
@@ -466,7 +476,7 @@ function LookupSection({ kind, title, items: initial, withActive = true }: { kin
         ))}
       </div>
       <Button variant="outline" size="sm" className="mt-4" onClick={() => setItems([...items, { code: "", name: { hy: "", ru: "", en: "" }, active: true, sortOrder: items.length + 1 }])}>
-        <Plus className="size-4" /> Add
+        <Plus className="size-4" /> {t.common.add}
       </Button>
     </Panel>
   );
@@ -486,35 +496,38 @@ function TestSection({ data }: { data: CalculatorSettingsData }) {
   const [result, setResult] = useState<EstimateResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const { t, locale } = useAdminT();
+  const x = t.calculator.test;
+  const nm = (n: Names) => n[locale] || n.en;
   async function runTest() {
     setBusy(true);
     setError(null);
     const res = await fetch("/api/calculator/estimate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input) });
     const json = await res.json();
     if (res.ok) setResult(json);
-    else setError(json?.error?.code ?? "Error");
+    else setError(json?.error?.code ?? x.error);
     setBusy(false);
   }
   return (
-    <Panel title="Test estimate" description="Runs the live engine with the saved configuration (changes apply within seconds of saving).">
+    <Panel title={x.title} description={x.hint}>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Select className={cell} value={input.auction} onChange={(e) => setInput({ ...input, auction: e.target.value })} options={data.auctions.map((a) => ({ value: a.code, label: a.name }))} />
-        <Input className={cell} type="number" value={input.price} onChange={(e) => setInput({ ...input, price: Number(e.target.value) })} aria-label="Price" />
-        <Input className={cell} type="number" value={input.year} onChange={(e) => setInput({ ...input, year: Number(e.target.value) })} aria-label="Year" />
-        <Input className={cell} type="number" step={0.1} value={input.engine} onChange={(e) => setInput({ ...input, engine: Number(e.target.value) })} aria-label="Engine" />
-        <Select className={cell} value={input.fuel} onChange={(e) => setInput({ ...input, fuel: e.target.value })} options={FUELS.map((f) => ({ value: f, label: f.toLowerCase() }))} />
-        <Select className={cell} value={input.vehicleType} onChange={(e) => setInput({ ...input, vehicleType: e.target.value })} options={data.vehicleTypes.map((v) => ({ value: v.code, label: v.name.en }))} />
-        <Select className={cell} value={input.origin} onChange={(e) => setInput({ ...input, origin: e.target.value })} options={data.origins.map((v) => ({ value: v.code, label: v.name.en }))} />
-        <Select className={cell} value={input.destination} onChange={(e) => setInput({ ...input, destination: e.target.value })} options={data.destinations.map((v) => ({ value: v.code, label: v.name.en }))} />
+        <Input className={cell} type="number" value={input.price} onChange={(e) => setInput({ ...input, price: Number(e.target.value) })} aria-label={t.common.price} />
+        <Input className={cell} type="number" value={input.year} onChange={(e) => setInput({ ...input, year: Number(e.target.value) })} aria-label={t.common.year} />
+        <Input className={cell} type="number" step={0.1} value={input.engine} onChange={(e) => setInput({ ...input, engine: Number(e.target.value) })} aria-label={x.engine} />
+        <Select className={cell} value={input.fuel} onChange={(e) => setInput({ ...input, fuel: e.target.value })} options={FUELS.map((f) => ({ value: f, label: (t.enums.fuel as Record<string, string>)[f] }))} />
+        <Select className={cell} value={input.vehicleType} onChange={(e) => setInput({ ...input, vehicleType: e.target.value })} options={data.vehicleTypes.map((v) => ({ value: v.code, label: nm(v.name) }))} />
+        <Select className={cell} value={input.origin} onChange={(e) => setInput({ ...input, origin: e.target.value })} options={data.origins.map((v) => ({ value: v.code, label: nm(v.name) }))} />
+        <Select className={cell} value={input.destination} onChange={(e) => setInput({ ...input, destination: e.target.value })} options={data.destinations.map((v) => ({ value: v.code, label: nm(v.name) }))} />
       </div>
       <Button className="mt-4" size="sm" onClick={runTest} loading={busy}>
-        <FlaskConical className="size-4" /> Run
+        <FlaskConical className="size-4" /> {x.run}
       </Button>
       {error && <p className="mt-4 text-sm text-danger">{error}</p>}
       {result && (
         <div className="mt-5 rounded-xl border border-line p-4 text-sm">
           <p className="mb-3 text-xs text-subtle">
-            Rule: <span className="text-fg">{result.customsRule}</span> · vehicle age {result.vehicleAge} · AMD rate {result.amdRate}
+            {x.rule} <span className="text-fg">{result.customsRule}</span> · {fmt(x.age, { age: result.vehicleAge })} · {fmt(x.amdRate, { rate: result.amdRate ?? "—" })}
           </p>
           <ul className="divide-y divide-line">
             {result.lines.map((l) => (
@@ -528,7 +541,7 @@ function TestSection({ data }: { data: CalculatorSettingsData }) {
             ))}
           </ul>
           <p className="mt-3 flex justify-between border-t border-line pt-3 font-medium">
-            Total <span className="tabular text-positive">{formatUsd(result.total)}</span>
+            {x.total} <span className="tabular text-positive">{formatUsd(result.total)}</span>
           </p>
         </div>
       )}

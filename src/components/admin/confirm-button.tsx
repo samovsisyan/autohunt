@@ -3,13 +3,14 @@
 import { useState, type ReactNode } from "react";
 import { Modal } from "@/components/ui/overlay";
 import { Button } from "@/components/ui/button";
+import { useAdminT } from "./i18n";
 
 /** In-page confirmation (no native confirm() dialogs). */
 export function ConfirmButton({
   children,
   title,
   message,
-  confirmLabel = "Delete",
+  confirmLabel,
   onConfirm,
   className,
   variant = "ghost",
@@ -22,6 +23,7 @@ export function ConfirmButton({
   className?: string;
   variant?: "ghost" | "danger" | "outline";
 }) {
+  const { t } = useAdminT();
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -32,7 +34,7 @@ export function ConfirmButton({
         {message && <p className="text-sm text-muted">{message}</p>}
         <div className="mt-6 flex justify-end gap-2">
           <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
+            {t.common.cancel}
           </Button>
           <Button
             variant="danger"
@@ -41,7 +43,7 @@ export function ConfirmButton({
               onConfirm();
             }}
           >
-            {confirmLabel}
+            {confirmLabel ?? t.confirm.delete}
           </Button>
         </div>
       </Modal>

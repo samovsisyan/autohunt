@@ -39,7 +39,7 @@ export default async function CalculationsPage({ params }: PageProps<"/[locale]/
                   </div>
                   <form action={deleteCalculationAction}>
                     <input type="hidden" name="id" value={c.id} />
-                    <button className="rounded-lg p-2 text-subtle hover:bg-white/5 hover:text-danger" aria-label={t.common.remove}>
+                    <button className="rounded-lg p-2 text-subtle hover:bg-fg/5 hover:text-danger" aria-label={t.common.remove}>
                       <Trash2 className="size-4" />
                     </button>
                   </form>

@@ -9,6 +9,7 @@ export const revalidate = 3600;
 const staticPaths = [
   { path: "", priority: 1, changeFrequency: "daily" as const },
   { path: "/cars", priority: 0.9, changeFrequency: "daily" as const },
+  { path: "/rent", priority: 0.8, changeFrequency: "weekly" as const },
   { path: "/calculator", priority: 0.9, changeFrequency: "weekly" as const },
   { path: "/import", priority: 0.8, changeFrequency: "monthly" as const },
   { path: "/corporate", priority: 0.7, changeFrequency: "monthly" as const },
@@ -19,7 +20,7 @@ const staticPaths = [
 
 /** Localized sitemap: every URL lists its hy/ru/en alternates (hreflang). */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [cars, posts] = await Promise.all([getAllCarSlugs().catch(() => []), getAllPostSlugs().catch(() => [])]);
+  const [cars, rentals, posts] = await Promise.all([getAllCarSlugs().catch(() => []), getAllCarSlugs("RENT").catch(() => []), getAllPostSlugs().catch(() => [])]);
   const alt = (path: string) => ({ languages: Object.fromEntries(locales.map((l) => [l, absoluteUrl(`/${l}${path}`)])) });
 
   const pages = staticPaths.flatMap(({ path, priority, changeFrequency }) =>
@@ -28,6 +29,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const carUrls = cars.flatMap((c) =>
     locales.map((l) => ({ url: absoluteUrl(`/${l}/cars/${c.slug}`), lastModified: c.updatedAt, priority: 0.8, changeFrequency: "weekly" as const, alternates: alt(`/cars/${c.slug}`) })),
+  );
+
+  const rentalUrls = rentals.flatMap((c) =>
+    locales.map((l) => ({ url: absoluteUrl(`/${l}/rent/${c.slug}`), lastModified: c.updatedAt, priority: 0.7, changeFrequency: "weekly" as const, alternates: alt(`/rent/${c.slug}`) })),
   );
 
   const postUrls = posts.flatMap((p) => {
@@ -41,5 +46,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
   });
 
-  return [...pages, ...carUrls, ...postUrls];
+  return [...pages, ...carUrls, ...rentalUrls, ...postUrls];
 }

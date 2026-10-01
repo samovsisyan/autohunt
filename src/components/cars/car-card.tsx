@@ -57,7 +57,7 @@ export function CarCard({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
       </Link>
-      <div className="absolute top-3 left-3 flex gap-2">
+      <div className="absolute top-3 left-3 flex gap-2" data-theme="dark">
         <StatusBadge status={car.status} label={t.enums.carStatus[car.status]} className="bg-black/55 backdrop-blur-md" />
       </div>
       <FavoriteButton id={car.id} labels={t.cars.card} className="absolute top-3 right-3" />

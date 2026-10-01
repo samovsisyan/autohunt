@@ -3,8 +3,9 @@ import { db } from "@/server/db";
 import { AdminHeader } from "@/components/admin/ui";
 import { CarEditor } from "@/components/admin/car-editor";
 import type { CarAdminInput } from "@/server/validation/admin";
+import { adminTitle, getAdminT } from "@/i18n/admin";
 
-export const metadata = { title: "Edit car" };
+export const generateMetadata = adminTitle((t) => t.cars.edit);
 
 export default async function EditCarPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,6 +14,7 @@ export default async function EditCarPage({ params }: { params: Promise<{ id: st
     include: { images: { orderBy: { sortOrder: "asc" } }, documents: true, translations: true },
   });
   if (!car) notFound();
+  const { t } = await getAdminT();
   const tr = (l: "hy" | "ru" | "en") => {
     const t = car.translations.find((x) => x.locale === l);
     return { description: t?.description ?? "", seoTitle: t?.seoTitle ?? "", seoDescription: t?.seoDescription ?? "" };
@@ -36,7 +38,10 @@ export default async function EditCarPage({ params }: { params: Promise<{ id: st
     color: car.color,
     interior: car.interior,
     vin: car.vin,
+    listingType: car.listingType,
     price: car.price,
+    rentDeposit: car.rentDeposit,
+    rentMinDays: car.rentMinDays,
     location: car.location,
     source: car.source,
     status: car.status,
@@ -50,7 +55,7 @@ export default async function EditCarPage({ params }: { params: Promise<{ id: st
   };
   return (
     <>
-      <AdminHeader title={`${car.year} ${car.brand} ${car.model}`} description={car.slug} back={{ href: "/admin/cars", label: "Cars" }} />
+      <AdminHeader title={`${car.year} ${car.brand} ${car.model}`} description={car.slug} back={{ href: "/admin/cars", label: t.cars.title }} />
       <CarEditor initial={initial} />
     </>
   );

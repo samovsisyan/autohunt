@@ -18,7 +18,7 @@ export function DashboardCard({
   className?: string;
 }) {
   const toneCls = {
-    neutral: "text-muted bg-white/5",
+    neutral: "text-muted bg-fg/5",
     accent: "text-accent bg-accent-soft",
     positive: "text-positive bg-positive-soft",
     warning: "text-warning bg-warning-soft",

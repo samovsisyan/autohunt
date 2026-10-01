@@ -24,7 +24,7 @@ export function FinanceSummary({ imp, locale, t }: { imp: Pick<UserImport, "purc
           <dt className="text-xs text-subtle">{imp.finalTotal ? t.dashboard.finance.finalTotal : t.dashboard.finance.estimatedTotal}</dt>
           <dd className="tabular mt-0.5 font-medium">
             {usd(total)}
-            {!imp.finalTotal && <span className="ml-1.5 rounded bg-white/5 px-1 py-0.5 align-middle text-[10px] font-normal text-subtle">{t.common.estimated}</span>}
+            {!imp.finalTotal && <span className="ml-1.5 rounded bg-fg/5 px-1 py-0.5 align-middle text-[10px] font-normal text-subtle">{t.common.estimated}</span>}
           </dd>
         </div>
         <div>
@@ -36,7 +36,7 @@ export function FinanceSummary({ imp, locale, t }: { imp: Pick<UserImport, "purc
           <dd className="tabular mt-0.5 font-medium text-warning">{usd(remaining)}</dd>
         </div>
       </dl>
-      <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/5" role="progressbar" aria-valuenow={Math.round(paidPct)} aria-valuemin={0} aria-valuemax={100} aria-label={t.dashboard.finance.paid}>
+      <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-fg/5" role="progressbar" aria-valuenow={Math.round(paidPct)} aria-valuemin={0} aria-valuemax={100} aria-label={t.dashboard.finance.paid}>
         <div className="h-full rounded-full bg-positive" style={{ width: `${paidPct}%` }} />
       </div>
     </div>

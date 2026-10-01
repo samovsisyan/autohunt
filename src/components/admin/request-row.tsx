@@ -8,6 +8,9 @@ import { StatusBadge } from "@/components/ui/badge";
 import { cn } from "@/lib/cn";
 import { useAdminAction } from "./hooks";
 import { ConfirmButton } from "./confirm-button";
+import { useAdminT } from "./i18n";
+import { intlLocales } from "@/i18n/config";
+import { fmt } from "@/i18n/format";
 
 export interface RequestRowData {
   id: string;
@@ -28,6 +31,8 @@ export interface RequestRowData {
 export function RequestRow({ r }: { r: RequestRowData }) {
   const [open, setOpen] = useState(r.status === "NEW");
   const { run, pending } = useAdminAction();
+  const { t, locale } = useAdminT();
+  const typeLabel = (t.enums.requestType as Record<string, string>)[r.type] ?? r.type;
   const payload = r.payload ? Object.entries(r.payload).filter(([, v]) => v !== null && v !== "" && typeof v !== "object") : [];
   const nested = r.payload ? Object.entries(r.payload).filter(([, v]) => v && typeof v === "object") : [];
   return (
@@ -40,10 +45,10 @@ export function RequestRow({ r }: { r: RequestRowData }) {
             {r.company && <span className="text-muted"> · {r.company}</span>}
           </span>
           <span className="block truncate text-xs text-subtle">
-            {r.type.replace("_", " ").toLowerCase()} · {r.car ?? r.phone} · {new Date(r.createdAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })} · {r.locale.toUpperCase()}
+            {typeLabel} · {r.car ?? r.phone} · {new Date(r.createdAt).toLocaleString(intlLocales[locale], { dateStyle: "medium", timeStyle: "short" })} · {r.locale.toUpperCase()}
           </span>
         </span>
-        <StatusBadge status={r.status} label={r.status.replace("_", " ").toLowerCase()} />
+        <StatusBadge status={r.status} label={t.enums.requestStatus[r.status]} />
         <ChevronDown className={cn("size-4 shrink-0 text-subtle transition-transform", open && "rotate-180")} />
       </button>
       {open && (
@@ -57,9 +62,9 @@ export function RequestRow({ r }: { r: RequestRowData }) {
                 <Mail className="size-4" /> {r.email}
               </a>
             )}
-            {r.user && <span className="text-subtle">Registered user: {r.user}</span>}
+            {r.user && <span className="text-subtle">{fmt(t.requests.registeredUser, { email: r.user })}</span>}
           </div>
-          {r.message && <p className="mt-3 rounded-xl bg-white/[0.03] px-4 py-3 text-sm whitespace-pre-wrap text-muted">{r.message}</p>}
+          {r.message && <p className="mt-3 rounded-xl bg-fg/[0.03] px-4 py-3 text-sm whitespace-pre-wrap text-muted">{r.message}</p>}
           {payload.length > 0 && (
             <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
               {payload.map(([k, v]) => (
@@ -73,12 +78,12 @@ export function RequestRow({ r }: { r: RequestRowData }) {
           {nested.map(([k, v]) => (
             <details key={k} className="mt-3 text-xs text-subtle">
               <summary className="cursor-pointer">{k}</summary>
-              <pre className="mt-2 overflow-x-auto rounded-xl bg-white/[0.03] p-3">{JSON.stringify(v, null, 2)}</pre>
+              <pre className="mt-2 overflow-x-auto rounded-xl bg-fg/[0.03] p-3">{JSON.stringify(v, null, 2)}</pre>
             </details>
           ))}
           <div className="mt-4 flex items-center justify-between gap-3">
-            <Select className="h-9 w-44 text-sm" disabled={pending} value={r.status} onChange={(e) => run(() => setRequestStatusAction(r.id, e.target.value as RequestRowData["status"]), { success: "Status updated" })} options={["NEW", "IN_PROGRESS", "QUOTED", "CLOSED"].map((s) => ({ value: s, label: s.replace("_", " ").toLowerCase() }))} />
-            <ConfirmButton title="Delete request?" onConfirm={() => run(() => deleteRequestAction(r.id), { success: "Deleted" })}>
+            <Select className="h-9 w-44 text-sm" disabled={pending} value={r.status} onChange={(e) => run(() => setRequestStatusAction(r.id, e.target.value as RequestRowData["status"]), { success: t.requests.statusUpdated })} options={(["NEW", "IN_PROGRESS", "QUOTED", "CLOSED"] as const).map((s) => ({ value: s, label: t.enums.requestStatus[s] }))} />
+            <ConfirmButton title={t.requests.deleteTitle} onConfirm={() => run(() => deleteRequestAction(r.id), { success: t.common.deleted })}>
               <Trash2 className="size-4 text-danger" />
             </ConfirmButton>
           </div>

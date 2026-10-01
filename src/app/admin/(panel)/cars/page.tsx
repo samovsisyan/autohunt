@@ -10,15 +10,25 @@ import { Badge, StatusBadge } from "@/components/ui/badge";
 import { buttonClasses } from "@/components/ui/button";
 import { formatUsd } from "@/i18n/format";
 import { cn } from "@/lib/cn";
+import { adminTitle, getAdminT } from "@/i18n/admin";
 
-export const metadata = { title: "Cars" };
+export const generateMetadata = adminTitle((t) => t.cars.title);
 
-const STATUSES = ["ALL", "AVAILABLE", "RESERVED", "IN_TRANSIT", "SOLD", "UNPUBLISHED"] as const;
+const STATUSES = ["ALL", "RENT", "AVAILABLE", "RESERVED", "IN_TRANSIT", "SOLD", "UNPUBLISHED"] as const;
 
 export default async function AdminCarsPage({ searchParams }: { searchParams: Promise<{ status?: string; q?: string }> }) {
   const { status = "ALL", q } = await searchParams;
+  const { t, locale } = await getAdminT();
+  const c = t.cars;
+  const statusLabel = (s: (typeof STATUSES)[number]) => (s === "ALL" ? c.filterAll : s === "UNPUBLISHED" ? c.filterUnpublished : s === "RENT" ? c.filterRent : t.enums.carStatus[s]);
   const where: Prisma.CarWhereInput = {
-    ...(status === "UNPUBLISHED" ? { published: false } : status !== "ALL" ? { status: status as Prisma.CarWhereInput["status"] } : {}),
+    ...(status === "UNPUBLISHED"
+      ? { published: false }
+      : status === "RENT"
+        ? { listingType: "RENT" as const }
+        : status !== "ALL"
+          ? { status: status as Prisma.CarWhereInput["status"] }
+          : {}),
     ...(q ? { OR: [{ brand: { contains: q, mode: "insensitive" } }, { model: { contains: q, mode: "insensitive" } }, { vin: { contains: q, mode: "insensitive" } }] } : {}),
   };
   const cars = await db.car.findMany({
@@ -30,12 +40,17 @@ export default async function AdminCarsPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <AdminHeader
-        title="Cars"
-        description="Inventory available in Armenia. Changes appear on the website immediately."
+        title={c.title}
+        description={c.subtitle}
         actions={
-          <Link href="/admin/cars/new" className={buttonClasses("primary", "sm")}>
-            <Plus className="size-4" /> Add car
-          </Link>
+          <>
+            <Link href="/admin/cars/new?type=RENT" className={buttonClasses("outline", "sm")}>
+              <Plus className="size-4" /> {c.addRental}
+            </Link>
+            <Link href="/admin/cars/new" className={buttonClasses("primary", "sm")}>
+              <Plus className="size-4" /> {c.add}
+            </Link>
+          </>
         }
       />
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -46,56 +61,60 @@ export default async function AdminCarsPage({ searchParams }: { searchParams: Pr
               href={`/admin/cars?status=${s}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
               className={cn("h-8 shrink-0 rounded-full border px-3 text-xs leading-8", s === status ? "border-accent/50 bg-accent-soft text-fg" : "border-line text-muted hover:text-fg")}
             >
-              {s.replace("_", " ").toLowerCase()}
+              {statusLabel(s)}
             </Link>
           ))}
         </div>
         <form className="sm:w-72">
           <input type="hidden" name="status" value={status} />
-          <input name="q" defaultValue={q} placeholder="Search brand, model, VIN…" className="h-10 w-full rounded-xl border border-line bg-white/[0.03] px-4 text-sm outline-none focus:border-accent/60" />
+          <input name="q" defaultValue={q} placeholder={c.search} className="h-10 w-full rounded-xl border border-line bg-fg/[0.03] px-4 text-sm outline-none focus:border-accent/60" />
         </form>
       </div>
       <Table>
         <THead>
           <tr>
-            <Th>Car</Th>
-            <Th>Price</Th>
-            <Th>Status</Th>
-            <Th>Languages</Th>
-            <Th>Location</Th>
-            <Th className="text-right">Actions</Th>
+            <Th>{c.colCar}</Th>
+            <Th>{t.common.price}</Th>
+            <Th>{t.common.status}</Th>
+            <Th>{t.common.languages}</Th>
+            <Th>{t.common.location}</Th>
+            <Th className="text-right">{t.common.actions}</Th>
           </tr>
         </THead>
         <tbody>
-          {cars.map((c) => (
-            <Tr key={c.id}>
+          {cars.map((car) => (
+            <Tr key={car.id}>
               <Td>
-                <Link href={`/admin/cars/${c.id}`} className="flex items-center gap-3 hover:text-accent">
+                <Link href={`/admin/cars/${car.id}`} className="flex items-center gap-3 hover:text-accent">
                   <span className="relative h-10 w-14 shrink-0 overflow-hidden rounded-lg bg-elevated">
-                    {c.images[0] && <Image src={c.images[0].url} alt="" fill sizes="56px" className="object-cover" />}
+                    {car.images[0] && <Image src={car.images[0].url} alt="" fill sizes="56px" className="object-cover" />}
                   </span>
                   <span>
                     <span className="block font-medium">
-                      {c.year} {c.brand} {c.model} {c.trim}
+                      {car.year} {car.brand} {car.model} {car.trim}
                     </span>
                     <span className="block text-xs text-subtle">
-                      {c.vin ?? c.slug}
-                      {c.featured && " · ★ featured"}
+                      {car.vin ?? car.slug}
+                      {car.featured && ` · ${c.featured}`}
                     </span>
                   </span>
                 </Link>
               </Td>
-              <Td className="tabular font-medium">{formatUsd(c.price)}</Td>
+              <Td className="tabular font-medium">
+                {formatUsd(car.price, locale)}
+                {car.listingType === "RENT" && <span className="font-normal text-subtle"> {c.perDay}</span>}
+              </Td>
               <Td>
                 <div className="flex flex-wrap gap-1">
-                  <StatusBadge status={c.status} label={c.status.replace("_", " ").toLowerCase()} />
-                  {!c.published && <Badge>draft</Badge>}
+                  {car.listingType === "RENT" && <Badge tone="accent">{c.rentBadge}</Badge>}
+                  <StatusBadge status={car.status} label={t.enums.carStatus[car.status]} />
+                  {!car.published && <Badge>{t.common.draft}</Badge>}
                 </div>
               </Td>
               <Td>
                 <div className="flex gap-1">
                   {(["hy", "ru", "en"] as const).map((l) => {
-                    const ok = c.translations.some((t) => t.locale === l && t.description.trim());
+                    const ok = car.translations.some((t) => t.locale === l && t.description.trim());
                     return (
                       <span key={l} className={cn("rounded px-1.5 py-0.5 text-[10px] uppercase", ok ? "bg-positive-soft text-positive" : "bg-warning-soft text-warning")}>
                         {l}
@@ -104,16 +123,16 @@ export default async function AdminCarsPage({ searchParams }: { searchParams: Pr
                   })}
                 </div>
               </Td>
-              <Td className="text-muted">{c.location}</Td>
+              <Td className="text-muted">{car.location}</Td>
               <Td>
-                <CarRowActions id={c.id} published={c.published} status={c.status} title={`${c.year} ${c.brand} ${c.model}`} />
+                <CarRowActions id={car.id} published={car.published} status={car.status} title={`${car.year} ${car.brand} ${car.model}`} />
               </Td>
             </Tr>
           ))}
           {!cars.length && (
             <tr>
               <td colSpan={6} className="px-4 py-12 text-center text-sm text-muted">
-                No cars match.
+                {c.noMatch}
               </td>
             </tr>
           )}

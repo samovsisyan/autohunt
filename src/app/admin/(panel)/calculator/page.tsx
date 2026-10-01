@@ -1,14 +1,15 @@
 import { db } from "@/server/db";
 import { AdminHeader } from "@/components/admin/ui";
 import { CalculatorSettings, type CalculatorSettingsData } from "@/components/admin/calculator-settings";
+import { adminTitle, getAdminT } from "@/i18n/admin";
 
-export const metadata = { title: "Calculator settings" };
+export const generateMetadata = adminTitle((t) => t.calculator.title);
 
 type Names = { hy: string; ru: string; en: string };
 const names = (n: unknown): Names => ({ hy: "", ru: "", en: "", ...(n as Partial<Names>) });
 
 export default async function CalculatorSettingsPage() {
-  const [rates, setting, auctions, origins, destinations, vehicleTypes, shipping, customs, fees] = await Promise.all([
+  const [rates, setting, auctions, origins, destinations, vehicleTypes, shipping, customs, fees, { t }] = await Promise.all([
     db.exchangeRate.findMany({ orderBy: { code: "asc" } }),
     db.setting.findUnique({ where: { key: "calculator" } }),
     db.auction.findMany({ orderBy: { sortOrder: "asc" }, include: { feeTiers: { orderBy: { minPrice: "asc" } } } }),
@@ -18,6 +19,7 @@ export default async function CalculatorSettingsPage() {
     db.shippingRate.findMany(),
     db.customsRule.findMany({ orderBy: { priority: "asc" } }),
     db.feeRule.findMany({ orderBy: { sortOrder: "asc" } }),
+    getAdminT(),
   ]);
   const s = (setting?.value ?? {}) as { customsBaseIncludesShipping?: boolean; referenceYear?: number | null };
 
@@ -43,8 +45,8 @@ export default async function CalculatorSettingsPage() {
   return (
     <>
       <AdminHeader
-        title="Calculator settings"
-        description="Every number behind the public cost calculator. Nothing is hardcoded in the frontend — saving here updates estimates on the website immediately."
+        title={t.calculator.title}
+        description={t.calculator.subtitle}
       />
       <CalculatorSettings data={data} />
     </>

@@ -7,8 +7,9 @@ import { RoleSelect } from "@/components/admin/customer-forms";
 import { StatusBadge } from "@/components/ui/badge";
 import { buttonClasses } from "@/components/ui/button";
 import { formatDate, formatUsd } from "@/i18n/format";
+import { adminTitle, getAdminT } from "@/i18n/admin";
 
-export const metadata = { title: "Customer" };
+export const generateMetadata = adminTitle((t) => t.customers.metaTitle);
 
 export default async function CustomerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -21,6 +22,9 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
     },
   });
   if (!u) notFound();
+  const { t, locale } = await getAdminT();
+  const c = t.customers;
+  const usd = (n: number) => formatUsd(n, locale);
   const owed = u.imports.reduce((s, i) => s + (i.finalTotal ?? i.estimatedTotal), 0);
   const paid = u.imports.reduce((s, i) => s + i.paidAmount, 0);
   return (
@@ -28,22 +32,22 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
       <AdminHeader
         title={u.name}
         description={[u.companyName, u.email, u.phone].filter(Boolean).join(" · ")}
-        back={{ href: "/admin/customers", label: "Customers" }}
+        back={{ href: "/admin/customers", label: c.title }}
         actions={
           <>
             <RoleSelect id={u.id} role={u.role} />
             <Link href={`/admin/imports/new?customer=${u.id}`} className={buttonClasses("primary", "sm")}>
-              <Plus className="size-4" /> New import
+              <Plus className="size-4" /> {c.newImport}
             </Link>
           </>
         }
       />
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         {[
-          ["Imports", u.imports.length],
-          ["Total (est./final)", formatUsd(owed)],
-          ["Paid", formatUsd(paid)],
-          ["Balance", formatUsd(Math.max(0, owed - paid))],
+          [c.statImports, u.imports.length],
+          [c.statTotal, usd(owed)],
+          [c.statPaid, usd(paid)],
+          [c.statBalance, usd(Math.max(0, owed - paid))],
         ].map(([k, v]) => (
           <div key={String(k)} className="rounded-2xl border border-line bg-surface p-4">
             <p className="text-xs text-subtle">{k}</p>
@@ -52,7 +56,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
         ))}
       </div>
       <div className="grid gap-6 xl:grid-cols-2">
-        <Panel title="Imports">
+        <Panel title={c.imports}>
           <ul className="-my-2 divide-y divide-line">
             {u.imports.map((i) => (
               <li key={i.id}>
@@ -62,40 +66,40 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
                       {i.vehicleTitle} {i.vehicleYear}
                     </span>
                     <span className="block text-xs text-subtle">
-                      {i.code} · {formatUsd(i.paidAmount)} / {formatUsd(i.finalTotal ?? i.estimatedTotal)}
+                      {i.code} · {usd(i.paidAmount)} / {usd(i.finalTotal ?? i.estimatedTotal)}
                     </span>
                   </span>
-                  <StatusBadge status={i.currentStage === "READY" ? "READY" : "CURRENT"} label={i.currentStage.toLowerCase().replace("_", " ")} />
+                  <StatusBadge status={i.currentStage === "READY" ? "READY" : "CURRENT"} label={t.enums.stage[i.currentStage]} />
                 </Link>
               </li>
             ))}
-            {!u.imports.length && <li className="py-3 text-sm text-muted">No imports.</li>}
+            {!u.imports.length && <li className="py-3 text-sm text-muted">{c.noImports}</li>}
           </ul>
         </Panel>
-        <Panel title="Requests">
+        <Panel title={c.requests}>
           <ul className="-my-2 divide-y divide-line">
             {u.requests.map((r) => (
               <li key={r.id} className="flex items-center justify-between gap-3 py-3 text-sm">
                 <span>
-                  {r.type.toLowerCase().replace("_", " ")}
+                  {t.enums.requestType[r.type]}
                   {r.car && <span className="text-muted"> · {r.car.year} {r.car.brand} {r.car.model}</span>}
-                  <span className="block text-xs text-subtle">{formatDate(r.createdAt, "en")}</span>
+                  <span className="block text-xs text-subtle">{formatDate(r.createdAt, locale)}</span>
                 </span>
-                <StatusBadge status={r.status} label={r.status.toLowerCase().replace("_", " ")} />
+                <StatusBadge status={r.status} label={t.enums.requestStatus[r.status]} />
               </li>
             ))}
-            {!u.requests.length && <li className="py-3 text-sm text-muted">No requests.</li>}
+            {!u.requests.length && <li className="py-3 text-sm text-muted">{c.noRequests}</li>}
           </ul>
         </Panel>
-        <Panel title="Saved calculations">
+        <Panel title={c.calculations}>
           <ul className="-my-2 divide-y divide-line">
-            {u.calculations.map((c) => (
-              <li key={c.id} className="flex justify-between py-3 text-sm">
-                <span>{c.label ?? c.shareId}</span>
-                <span className="tabular text-positive">{formatUsd((c.result as { total: number }).total)}</span>
+            {u.calculations.map((calc) => (
+              <li key={calc.id} className="flex justify-between py-3 text-sm">
+                <span>{calc.label ?? calc.shareId}</span>
+                <span className="tabular text-positive">{usd((calc.result as { total: number }).total)}</span>
               </li>
             ))}
-            {!u.calculations.length && <li className="py-3 text-sm text-muted">None.</li>}
+            {!u.calculations.length && <li className="py-3 text-sm text-muted">{t.common.none}</li>}
           </ul>
         </Panel>
       </div>
